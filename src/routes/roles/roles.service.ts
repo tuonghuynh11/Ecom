@@ -38,14 +38,8 @@ export class RolesService {
 
   async update({ id, payload, updatedById }: { id: number; payload: UpdateRoleBodyType; updatedById: number }) {
     try {
-      const role = await this.RolesRepository.findOne(id)
-      if (!role) {
-        throw NotFoundRecordException
-      }
       // Don't allow updating Admin role
-      if (role.name === RoleName.Admin) {
-        throw ProhibitedActionOnBaseRoleException
-      }
+      await this.verifyRole(id)
 
       return await this.RolesRepository.update({ id, payload, updatedById })
     } catch (error) {
@@ -61,10 +55,7 @@ export class RolesService {
 
   async remove({ id, deletedById }: { id: number; deletedById: number }) {
     try {
-      const role = await this.RolesRepository.findOne(id)
-      if (!role) {
-        throw NotFoundRecordException
-      }
+      const role = await this.verifyRole(id)
 
       // Don't allow deleting 3 system roles: Admin, Client, Seller
       const baseRoles: string[] = [RoleName.Admin, RoleName.Client, RoleName.Seller]
@@ -82,5 +73,16 @@ export class RolesService {
       }
       throw error
     }
+  }
+  private async verifyRole(roleId: number) {
+    const role = await this.RolesRepository.findOne(roleId)
+    if (!role) {
+      throw NotFoundRecordException
+    }
+    const baseRoles: string[] = [RoleName.Admin, RoleName.Client, RoleName.Seller]
+    if (baseRoles.includes(role.name)) {
+      throw ProhibitedActionOnBaseRoleException
+    }
+    return role
   }
 }
