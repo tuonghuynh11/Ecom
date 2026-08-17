@@ -7,7 +7,6 @@ import {
   EmailNotFoundException,
   FailedToSendOTPException,
   InvalidOTPException,
-  InvalidPasswordException,
   InvalidTOTPAndCodeException,
   InvalidTOTPException,
   OTPExpiredException,
@@ -29,6 +28,7 @@ import { AuthRepository } from 'src/routes/auth/auth.repo'
 import { RoleService } from 'src/routes/auth/role.service'
 import envConfig from 'src/shared/config'
 import { TypeOfVerificationCode, TypeOfVerificationCodeType } from 'src/shared/constants/auth.constant'
+import { InvalidPasswordException } from 'src/shared/error'
 import { generateOTP, isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
@@ -119,6 +119,7 @@ export class AuthService {
     // 1. Kiểm tra email có tồn tại trong database không
     const user = await this.sharedUserRepository.findUnique({
       email: payload.email,
+      deletedAt: null,
     })
 
     if (payload.type === TypeOfVerificationCode.REGISTER && user) {
@@ -162,6 +163,7 @@ export class AuthService {
     //1. Kiểm tra user có tồn tại không, mật khẩu có đúng không
     const user = await this.authRepository.findUniqueUserIncludeRole({
       email: body.email,
+      deletedAt: null,
     })
 
     if (!user) {
@@ -325,8 +327,9 @@ export class AuthService {
     const { code, newPassword, email } = payload
     try {
       // 1. Kiểm tra emai có tồn tại không
-      const user = await this.authRepository.findUniqueUserIncludeRole({
+      const user = await this.sharedUserRepository.findUnique({
         email,
+        deletedAt: null,
       })
       if (!user) {
         throw EmailNotFoundException
@@ -343,7 +346,10 @@ export class AuthService {
 
       // 4. Update password and delete verification code
       await Promise.all([
-        this.authRepository.updateUser({ id: user.id }, { password: hashedPassword }),
+        this.sharedUserRepository.update(
+          { id: user.id, deletedAt: null },
+          { password: hashedPassword, updatedById: user.id },
+        ),
         this.authRepository.deleteVerificationCode({
           email_type: {
             email,
@@ -366,7 +372,7 @@ export class AuthService {
 
   async setupTwoFactorAuth({ userId }: { userId: number }) {
     // 1. Lấy thông tin user,  Kiểm tra user có tồn tại không, và đã bật 2FA chưa
-    const user = await this.authRepository.findUniqueUserIncludeRole({ id: userId })
+    const user = await this.sharedUserRepository.findUnique({ id: userId, deletedAt: null })
     if (!user) {
       throw EmailNotFoundException
     }
@@ -379,7 +385,7 @@ export class AuthService {
     const { secret, uri } = this.twoFactorAuthService.generateTOTPSecret(user.email)
 
     // 3. Lưu TOTP secret vào database
-    await this.authRepository.updateUser({ id: userId }, { totpSecret: secret })
+    await this.sharedUserRepository.update({ id: userId, deletedAt: null }, { totpSecret: secret, updatedById: userId })
 
     // 4. Tra về TOTP secret và uri cho client để tạo QR code
     return { secret, uri }
@@ -388,7 +394,7 @@ export class AuthService {
   async disableTwoFactorAuth(data: { userId: number } & DisableTwoFactorBodyType) {
     const { userId, totpCode, code } = data
     // 1. Lấy thông tin user,  Kiểm tra user có tồn tại không, và đã bật 2FA chưa
-    const user = await this.sharedUserRepository.findUnique({ id: userId })
+    const user = await this.sharedUserRepository.findUnique({ id: userId, deletedAt: null })
     if (!user) {
       throw EmailNotFoundException
     }
@@ -416,7 +422,7 @@ export class AuthService {
       })
     }
     // 3. Nếu đã bật 2FA thì cập nhật TOTP secret trong database về null để tắt 2FA
-    await this.authRepository.updateUser({ id: userId }, { totpSecret: null })
+    await this.sharedUserRepository.update({ id: userId, deletedAt: null }, { totpSecret: null, updatedById: userId })
 
     return { message: 'Disable 2FA successfully' }
   }

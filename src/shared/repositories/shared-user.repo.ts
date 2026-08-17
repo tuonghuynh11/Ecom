@@ -4,9 +4,9 @@ import { RoleType } from 'src/shared/models/share-role.model'
 import { UserType } from 'src/shared/models/shared-user.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
-type UserIncludeRolePermissionType = UserType & { role: RoleType & { permissions: PermissionType[] } }
+export type UserIncludeRolePermissionType = UserType & { role: RoleType & { permissions: PermissionType[] } }
 
-type WhereUniqueUserType = { id: number; [key: string]: any } | { email: string; [key: string]: any }
+export type WhereUniqueUserType = { id: number; [key: string]: any } | { email: string; [key: string]: any }
 
 @Injectable()
 export class SharedUserRepository {
