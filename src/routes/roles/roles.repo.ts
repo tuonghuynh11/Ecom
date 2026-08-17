@@ -8,6 +8,7 @@ import {
   GetRolesResType,
   UpdateRoleBodyType,
 } from 'src/routes/roles/roles.model'
+import { RoleType } from 'src/shared/models/share-role.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
@@ -62,7 +63,7 @@ export class RolesRepository {
     })
   }
 
-  create({ payload, createdById }: { payload: CreateRoleBodyType; createdById: number }) {
+  create({ payload, createdById }: { payload: CreateRoleBodyType; createdById: number }): Promise<RoleType> {
     return this.prisma.role.create({
       data: {
         ...payload,

@@ -51,7 +51,6 @@ export const GetRolesQueriesSchema = z
   })
   .strict()
 
-export type RoleType = z.infer<typeof RoleSchema>
 export type GetRolesResType = z.infer<typeof GetRolesResSchema>
 export type GetRoleDetailResType = z.infer<typeof GetRoleDetailResSchema>
 export type CreateRoleBodyType = z.infer<typeof CreateRoleBodySchema>

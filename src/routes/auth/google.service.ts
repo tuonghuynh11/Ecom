@@ -5,8 +5,8 @@ import { GoogleUserInfoError } from 'src/routes/auth/auth.error'
 import { GoogleAuthStateType } from 'src/routes/auth/auth.model'
 import { AuthRepository } from 'src/routes/auth/auth.repo'
 import { AuthService } from 'src/routes/auth/auth.service'
-import { RoleService } from 'src/routes/auth/role.service'
 import envConfig from 'src/shared/config'
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
 
@@ -18,7 +18,7 @@ export class GoogleService {
     private readonly authRepository: AuthRepository,
     private readonly hashingService: HashingService,
     private readonly tokenService: TokenService,
-    private readonly roleService: RoleService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly authService: AuthService,
   ) {
     this.oAuth2Client = new google.auth.OAuth2({
@@ -79,7 +79,7 @@ export class GoogleService {
         const randomPassword = uuidv4() // Tạo mật khẩu ngẫu nhiên cho user mới
         const [hashedPassword, clientRoleId] = await Promise.all([
           this.hashingService.hash(randomPassword),
-          this.roleService.getClientRoleId(),
+          this.sharedRoleRepository.getClientRoleId(),
         ])
 
         user = await this.authRepository.createUserIncludeRole({

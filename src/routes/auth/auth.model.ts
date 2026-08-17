@@ -1,5 +1,4 @@
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constant'
-import { RoleSchema } from 'src/shared/models/share-role.model'
 import { UserSchema } from 'src/shared/models/shared-user.model'
 import z from 'zod'
 
@@ -182,8 +181,6 @@ export type RefreshTokenType = z.infer<typeof RefreshTokenSchema>
 export type RefreshTokenResType = LoginResType
 
 export type DeviceType = z.infer<typeof DeviceSchema>
-
-export type RoleType = z.infer<typeof RoleSchema>
 
 export type LogoutBodyType = RefreshTokenBodyType
 

@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 import { EmailService } from 'src/shared/services/email.service'
@@ -17,6 +18,7 @@ const sharedServices = [
   TokenService,
   EmailService,
   SharedUserRepository,
+  SharedRoleRepository,
   TwoFactorAuthService,
 ]
 

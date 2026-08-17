@@ -25,11 +25,11 @@ import {
   VerificationCodeType,
 } from 'src/routes/auth/auth.model'
 import { AuthRepository } from 'src/routes/auth/auth.repo'
-import { RoleService } from 'src/routes/auth/role.service'
 import envConfig from 'src/shared/config'
 import { TypeOfVerificationCode, TypeOfVerificationCodeType } from 'src/shared/constants/auth.constant'
 import { InvalidPasswordException } from 'src/shared/error'
 import { generateOTP, isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 import { EmailService } from 'src/shared/services/email.service'
@@ -42,7 +42,7 @@ export class AuthService {
   constructor(
     private readonly hashingService: HashingService,
     private readonly tokenService: TokenService,
-    private readonly roleService: RoleService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
     private readonly emailService: EmailService,
@@ -87,7 +87,7 @@ export class AuthService {
 
       const [hashedPassword, roleId] = await Promise.all([
         this.hashingService.hash(body.password),
-        this.roleService.getClientRoleId(),
+        this.sharedRoleRepository.getClientRoleId(),
       ])
 
       const [user] = await Promise.all([
