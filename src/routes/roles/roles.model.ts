@@ -1,4 +1,4 @@
-import { PermissionSchema } from 'src/shared/models/share-permissiom.model'
+import { PermissionSchema } from 'src/shared/models/share-permission.model'
 import { RoleSchema } from 'src/shared/models/share-role.model'
 import z from 'zod'
 
@@ -17,6 +17,7 @@ export const GetRoleDetailResSchema = RoleSchema.extend({
       description: true,
       method: true,
       path: true,
+      module: true,
     }),
   ),
 })

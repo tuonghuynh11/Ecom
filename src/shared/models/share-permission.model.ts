@@ -5,6 +5,7 @@ export const PermissionSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().max(500),
   description: z.string().default(''),
+  module: z.string().max(500).default(''),
   path: z.string().max(1000),
   method: z.enum([
     HTTPMethod.GET,
