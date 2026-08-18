@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import { LanguageModule } from 'src/routes/languages/languages.module'
+import { MediaModule } from 'src/routes/media/media.module'
 import { PermissionsModule } from 'src/routes/permissions/permissions.module'
 import { ProfileModule } from 'src/routes/profile/profile.module'
 import { RolesModule } from 'src/routes/roles/roles.module'
@@ -14,7 +15,16 @@ import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
 
 @Module({
-  imports: [SharedModule, AuthModule, LanguageModule, PermissionsModule, RolesModule, ProfileModule, UserModule],
+  imports: [
+    SharedModule,
+    AuthModule,
+    LanguageModule,
+    PermissionsModule,
+    RolesModule,
+    ProfileModule,
+    UserModule,
+    MediaModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
