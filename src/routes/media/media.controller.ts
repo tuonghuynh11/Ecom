@@ -14,11 +14,13 @@ import { FilesInterceptor } from '@nestjs/platform-express'
 import type { Response } from 'express'
 import path from 'path'
 import { FileNotFoundException } from 'src/routes/media/media.error'
-import envConfig from 'src/shared/config'
+import { MediaService } from 'src/routes/media/media.service'
 import { UPLOAD_DIR } from 'src/shared/constants/other.constant'
+import { IsPublic } from 'src/shared/decorators/auth.decorator'
 
 @Controller('media')
 export class MediaController {
+  constructor(private readonly mediaService: MediaService) {}
   @Post('images/upload')
   @UseInterceptors(
     FilesInterceptor('files', 3, {
@@ -27,6 +29,7 @@ export class MediaController {
       },
     }),
   )
+  @IsPublic()
   uploadFile(
     @UploadedFiles(
       new ParseFilePipe({
@@ -40,11 +43,7 @@ export class MediaController {
     )
     files: Array<Express.Multer.File>,
   ) {
-    console.log(files)
-
-    return files.map((file) => ({
-      url: `${envConfig.PREFIX_STATIC_ENDPOINT}/${file.filename}`,
-    }))
+    return this.mediaService.uploadFile(files)
   }
 
   @Get('static/:filename')
