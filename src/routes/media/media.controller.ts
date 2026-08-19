@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   FileTypeValidator,
   Get,
@@ -53,5 +54,11 @@ export class MediaController {
         res.status(FileNotFoundException.getStatus()).send(FileNotFoundException.getResponse())
       }
     })
+  }
+
+  @IsPublic()
+  @Post('images/upload/presigned-url')
+  async createPresignedUrl(@Body() body: { filename: string }) {
+    return this.mediaService.getPresignedUrl(body)
   }
 }
