@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
+import * as path from 'path'
 import { BrandTranslationModule } from 'src/routes/brand/brand-translation/brand-translation.module'
 import { BrandModule } from 'src/routes/brand/brand.module'
 import { LanguageModule } from 'src/routes/languages/languages.module'
@@ -15,7 +17,6 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
-
 @Module({
   imports: [
     SharedModule,
@@ -28,6 +29,17 @@ import { SharedModule } from './shared/shared.module'
     MediaModule,
     BrandModule,
     BrandTranslationModule,
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.resolve('src/i18n/'),
+        watch: true,
+      },
+      typesOutputPath: path.resolve('src/generated/i18n.generated.ts'),
+      // Priority QueryResolver: Has "lang" query parameter,
+      // AcceptLanguageResolver: Has "Accept-Language" header
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
+    }),
   ],
   controllers: [AppController],
   providers: [
