@@ -7,27 +7,37 @@ export class MediaService {
   constructor(private readonly s3Service: S3Service) {}
 
   async uploadFile(files: Array<Express.Multer.File>) {
-    const results = await Promise.all(
-      files.map(async (file) => {
-        return this.s3Service
-          .uploadFile({
-            filename: 'images/' + file.filename,
-            filepath: file.path,
-            contentType: file.mimetype,
-          })
-          .then((res) => {
-            return {
-              url: res.Location,
-            }
-          })
-      }),
-    )
-    // Delete the local files after uploading to S3
-    await Promise.all(
-      files.map((file) => {
-        return unlink(file.path)
-      }),
-    )
-    return results
+    try {
+      const results = await Promise.all(
+        files.map(async (file) => {
+          return this.s3Service
+            .uploadFile({
+              filename: 'images/' + file.filename,
+              filepath: file.path,
+              contentType: file.mimetype,
+            })
+            .then((res) => {
+              return {
+                url: res.Location,
+              }
+            })
+            .catch((err) => {
+              throw err
+            })
+        }),
+      )
+
+      return results
+    } finally {
+      await Promise.all(
+        files.map(async (file) => {
+          await this.deleteFile(file.path)
+        }),
+      )
+    }
+  }
+
+  async deleteFile(filepath: string) {
+    return unlink(filepath)
   }
 }
