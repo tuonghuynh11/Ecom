@@ -7,42 +7,35 @@ import {
   UpdateProductBodyDTO,
 } from 'src/routes/product/product.dto'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+import type { AccessTokenPayload } from 'src/shared/types/jwt.type'
 
 @Controller('manage-product/products')
 export class ManageProductController {
   constructor(private readonly manageProductService: ManageProductService) {}
 
   @Get()
-  list(
-    @Query() query: GetManageProductsQueryDTO,
-    @ActiveUser('userId') userId: number,
-    @ActiveUser('roleName') roleName: string,
-  ) {
+  list(@Query() query: GetManageProductsQueryDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.list({
       query,
-      roleNameRequest: roleName,
-      userIdRequest: userId,
+      roleNameRequest: user.roleName,
+      userIdRequest: user.userId,
     })
   }
 
   @Get(':productId')
-  findById(
-    @Param() params: GetProductParamsDTO,
-    @ActiveUser('userId') userId: number,
-    @ActiveUser('roleName') roleName: string,
-  ) {
+  findById(@Param() params: GetProductParamsDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.getDetail({
       productId: params.productId,
-      roleNameRequest: roleName,
-      userIdRequest: userId,
+      roleNameRequest: user.roleName,
+      userIdRequest: user.userId,
     })
   }
 
   @Post()
-  create(@Body() body: CreateProductBodyDTO, @ActiveUser('userId') userId: number) {
+  create(@Body() body: CreateProductBodyDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.create({
       data: body,
-      createdById: userId,
+      createdById: user.userId,
     })
   }
 
@@ -50,27 +43,22 @@ export class ManageProductController {
   update(
     @Body() body: UpdateProductBodyDTO,
     @Param() params: GetProductParamsDTO,
-    @ActiveUser('userId') userId: number,
-    @ActiveUser('roleName') roleName: string,
+    @ActiveUser() user: AccessTokenPayload,
   ) {
     return this.manageProductService.update({
       data: body,
       productId: params.productId,
-      updatedById: userId,
-      roleNameRequest: roleName,
+      updatedById: user.userId,
+      roleNameRequest: user.roleName,
     })
   }
 
   @Delete(':productId')
-  delete(
-    @Param() params: GetProductParamsDTO,
-    @ActiveUser('userId') userId: number,
-    @ActiveUser('roleName') roleName: string,
-  ) {
+  delete(@Param() params: GetProductParamsDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.delete({
       productId: params.productId,
-      deletedById: userId,
-      roleNameRequest: roleName,
+      deletedById: user.userId,
+      roleNameRequest: user.roleName,
     })
   }
 }
