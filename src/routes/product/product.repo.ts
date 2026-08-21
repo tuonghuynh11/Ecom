@@ -95,11 +95,11 @@ export class ProductRepo {
         basePrice: orderBy,
       }
     } else if (sortBy === SortBy.Sale) {
-      // caculatedOrderBy = {
-      //   orders: {
-      //     _count: orderBy,
-      //   },
-      // }
+      caculatedOrderBy = {
+        orders: {
+          _count: orderBy,
+        },
+      }
     }
     const [totalItems, data] = await Promise.all([
       this.prismaService.product.count({
@@ -111,12 +111,12 @@ export class ProductRepo {
           productTranslations: {
             where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
           },
-          // orders: {
-          //   where: {
-          //     deletedAt: null,
-          //     status: 'DELIVERED',
-          //   },
-          // },
+          orders: {
+            where: {
+              deletedAt: null,
+              status: 'DELIVERED',
+            },
+          },
         },
         orderBy: caculatedOrderBy,
         skip,

@@ -16,6 +16,7 @@ datasource db {
 generator json {
   provider = "prisma-json-types-generator"
 }
+
 model Language {
   id                   String                @id @db.VarChar(10)
   name                 String                @db.VarChar(500)
@@ -40,7 +41,7 @@ model Language {
 
 model User {
   id          Int     @id @default(autoincrement())
-  email       String  
+  email       String
   name        String  @db.VarChar(500)
   password    String  @db.VarChar(500)
   phoneNumber String  @db.VarChar(50)
@@ -183,7 +184,7 @@ model Permission {
   description String     @default("")
   path        String     @db.VarChar(1000)
   method      HTTPMethod
-  module      String     @db.VarChar(500) @default("")
+  module      String     @default("") @db.VarChar(500)
   roles       Role[]
 
   createdById Int?
@@ -224,10 +225,10 @@ model Role {
 
 model Product {
   id                  Int                  @id @default(autoincrement())
-  publishedAt         DateTime? 
+  publishedAt         DateTime?
   name                String               @db.VarChar(500)
-  basePrice          Float
-  virtualPrice       Float
+  basePrice           Float
+  virtualPrice        Float
   brandId             Int
   brand               Brand                @relation(fields: [brandId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   images              String[]
@@ -237,6 +238,7 @@ model Product {
   skus                SKU[]
   reviews             Review[]
   productTranslations ProductTranslation[]
+  orders              Order[]
 
   createdById Int?
   createdBy   User? @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -322,7 +324,6 @@ model CategoryTranslation {
 
   @@index([deletedAt])
 }
-
 
 model SKU {
   id                  Int                  @id @default(autoincrement())
@@ -420,11 +421,12 @@ model ProductSKUSnapshot {
 }
 
 model Order {
-  id     Int                  @id @default(autoincrement())
-  userId Int
-  user   User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status OrderStatus
-  items  ProductSKUSnapshot[]
+  id       Int                  @id @default(autoincrement())
+  userId   Int
+  user     User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status   OrderStatus
+  items    ProductSKUSnapshot[]
+  products Product[]
 
   createdById Int?
   createdBy   User? @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -438,6 +440,7 @@ model Order {
   updatedAt DateTime  @updatedAt
 
   @@index([deletedAt])
+  @@index([status, deletedAt])
 }
 
 model Review {
