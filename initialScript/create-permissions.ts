@@ -4,6 +4,8 @@ import { HTTPMethod } from 'src/generated/prisma/enums'
 import { RoleName } from 'src/shared/constants/role.constant'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
+const SellerModules = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE']
+
 const prisma = new PrismaService()
 
 async function bootstrap() {
@@ -84,30 +86,43 @@ async function bootstrap() {
   }
 
   // Sync permissions with Admin roles
-  const adminRole = await prisma.role.findFirst({
-    where: { name: RoleName.Admin },
-  })
-  if (!adminRole) {
-    console.error('Admin role not found. Please create an Admin role first.')
-    process.exit(1)
-  }
-
   // Get all permissions from the database
   const updatedPermissionInDb = await prisma.permission.findMany({ where: { deletedAt: null } })
 
+  const adminRolePermissionIds = updatedPermissionInDb.map((permission) => ({ id: permission.id }))
+
+  const sellerRolePermissionIds = updatedPermissionInDb
+    .filter((permission) => SellerModules.includes(permission.module))
+    .map((permission) => ({ id: permission.id }))
+  await Promise.all([
+    updateRolePermissions(adminRolePermissionIds, RoleName.Admin),
+    updateRolePermissions(sellerRolePermissionIds, RoleName.Seller),
+  ])
+  process.exit(0)
+}
+
+const updateRolePermissions = async (permissionIds: { id: number }[], roleName: string) => {
+  // Sync permissions with role
+  const role = await prisma.role.findFirstOrThrow({
+    where: { name: roleName },
+  })
+  if (!role) {
+    console.error(`${roleName} role not found. Please create a ${roleName} role first.`)
+    process.exit(1)
+  }
   // Update Admin role with all permissions
   await prisma.role.update({
-    where: { id: adminRole.id },
+    where: { id: role.id },
     data: {
       permissions: {
-        set: updatedPermissionInDb.map((permission) => ({ id: permission.id })),
+        set: permissionIds,
       },
     },
   })
-  console.info(
-    `Admin role permissions updated successfully with all available permissions: ${updatedPermissionInDb.length}`,
-  )
 
-  process.exit(0)
+  console.info(
+    `${roleName} role permissions updated successfully with all available permissions: ${permissionIds.length}`,
+  )
 }
+
 bootstrap()

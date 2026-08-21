@@ -10,6 +10,8 @@ import { CategoryModule } from 'src/routes/category/category.module'
 import { LanguageModule } from 'src/routes/languages/languages.module'
 import { MediaModule } from 'src/routes/media/media.module'
 import { PermissionsModule } from 'src/routes/permissions/permissions.module'
+import { ProductTranslationModule } from 'src/routes/product/product-translation/product-translation.module'
+import { ProductModule } from 'src/routes/product/product.module'
 import { ProfileModule } from 'src/routes/profile/profile.module'
 import { RolesModule } from 'src/routes/roles/roles.module'
 import { UserModule } from 'src/routes/user/user.module'
@@ -33,6 +35,8 @@ import { SharedModule } from './shared/shared.module'
     BrandTranslationModule,
     CategoryModule,
     CategoryTranslationModule,
+    ProductModule,
+    ProductTranslationModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
