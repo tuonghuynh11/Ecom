@@ -12,13 +12,18 @@ export class ProductService {
   async list(query: GetProductsQueryType) {
     const data = await this.productRepo.list({
       ...query,
+      isPublic: true,
       languageId: I18nContext.current()?.lang as string,
     })
     return data
   }
 
-  async findById(id: number) {
-    const product = await this.productRepo.findById(id)
+  async getDetail(id: number) {
+    const product = await this.productRepo.getDetail({
+      productId: id,
+      languageId: I18nContext.current()?.lang as string,
+      isPublic: true,
+    })
     if (!product) {
       throw NotFoundRecordException
     }
