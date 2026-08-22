@@ -7,6 +7,7 @@ import {
 } from 'src/routes/cart/cart.error'
 import {
   AddToCartBodyType,
+  CartItemDetailType,
   CartItemType,
   DeleteCartBodyType,
   GetCartResType,
@@ -64,40 +65,119 @@ export class CartRepo {
     limit: number
     page: number
   }): Promise<GetCartResType> {
-    const skip = (page - 1) * limit
-    const take = limit
-    const [totalItems, data] = await Promise.all([
-      this.prismaService.cartItem.count({
-        where: { userId },
-      }),
-      this.prismaService.cartItem.findMany({
-        where: { userId },
-        include: {
-          sku: {
-            include: {
-              product: {
-                include: {
-                  productTranslations: {
-                    where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
+    // const cartItems = await this.prismaService.cartItem
+    //   .findMany({
+    //     where: {
+    //       userId,
+    //       sku: {
+    //         product: {
+    //           deletedAt: null,
+    //           publishedAt: {
+    //             lte: new Date(),
+    //             not: null,
+    //           },
+    //           createdBy: {
+    //             not: null,
+    //           },
+    //         },
+    //       },
+    //     },
+    //     orderBy: {
+    //       updatedAt: 'desc',
+    //     },
+    //     include: {
+    //       sku: {
+    //         include: {
+    //           product: {
+    //             include: {
+    //               productTranslations: {
+    //                 where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
+    //               },
+    //               createdBy: true,
+    //             },
+    //           },
+    //         },
+    //       },
+    //     },
+    //   })
+    //   .then((items) => {
+    //     const groupItemsByShop = items.reduce((acc: any, item: any) => {
+    //       if (acc[item.sku.product.createdBy.id]) {
+    //         acc[item.sku.product.createdBy.id].cartItems.push(item)
+    //       } else {
+    //         acc[item.sku.product.createdBy.id] = {
+    //           shop: {
+    //             id: item.sku.product.createdBy.id,
+    //             name: item.sku.product.createdBy.name,
+    //             avatar: item.sku.product.createdBy.avatar,
+    //           },
+    //           cartItems: [item],
+    //         }
+    //       }
+    //     }, {})
+
+    //     const result: CartItemDetailType[] = Object.values(groupItemsByShop)
+    //     return result
+    //   })
+
+    const cartItems = (await this.prismaService.cartItem.findMany({
+      where: {
+        userId,
+        sku: {
+          product: {
+            deletedAt: null,
+            publishedAt: {
+              lte: new Date(),
+              not: null,
+            },
+          },
+        },
+      },
+      include: {
+        sku: {
+          include: {
+            product: {
+              include: {
+                productTranslations: {
+                  where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
+                },
+                createdBy: {
+                  select: {
+                    id: true,
+                    name: true,
+                    avatar: true,
                   },
                 },
               },
             },
           },
         },
-        skip,
-        take,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-    ])
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    })) as any
+    const groupMap = new Map<number, CartItemDetailType>()
+    for (const cartItem of cartItems) {
+      const shopId = cartItem.sku.product.createdById
+      if (shopId) {
+        if (!groupMap.has(shopId)) {
+          groupMap.set(shopId, { shop: cartItem.sku.product.createdBy, cartItems: [] })
+        }
+        groupMap.get(shopId)?.cartItems.push(cartItem)
+      }
+    }
+    const sortedGroups = Array.from(groupMap.values())
+    const skip = (page - 1) * limit
+    const take = limit
+    const totalGroups = sortedGroups.length
+    const pagedGroups = sortedGroups.slice(skip, skip + take)
     return {
-      data: data as any,
-      totalItems: data.length,
+      data: pagedGroups,
+      totalItems: totalGroups,
       limit,
       page,
-      totalPages: Math.ceil(totalItems / limit),
+      totalPages: Math.ceil(totalGroups / limit),
     }
   }
 
@@ -123,6 +203,7 @@ export class CartRepo {
       data: {
         skuId: body.skuId,
         quantity: body.quantity,
+        updatedAt: new Date(),
       },
     })
   }
