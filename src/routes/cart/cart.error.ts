@@ -5,3 +5,5 @@ export const NotFoundSKUException = new NotFoundException('Error.SKU.NotFound')
 export const OutOfStockSKUException = new BadRequestException('Error.SKU.OutOfStock')
 
 export const ProductNotFoundException = new NotFoundException('Error.Product.NotFound')
+
+export const NotEnoughStockSKUException = new BadRequestException('Error.SKU.NotEnoughStock')

@@ -5,6 +5,7 @@ import { ZodSerializerInterceptor } from 'nestjs-zod'
 import * as path from 'path'
 import { BrandTranslationModule } from 'src/routes/brand/brand-translation/brand-translation.module'
 import { BrandModule } from 'src/routes/brand/brand.module'
+import { CartModule } from 'src/routes/cart/cart.module'
 import { CategoryTranslationModule } from 'src/routes/category/category-translation/category-translation.module'
 import { CategoryModule } from 'src/routes/category/category.module'
 import { LanguageModule } from 'src/routes/languages/languages.module'
@@ -37,6 +38,7 @@ import { SharedModule } from './shared/shared.module'
     CategoryTranslationModule,
     ProductModule,
     ProductTranslationModule,
+    CartModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {

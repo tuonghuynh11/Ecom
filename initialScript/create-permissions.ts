@@ -4,7 +4,8 @@ import { HTTPMethod } from 'src/generated/prisma/enums'
 import { RoleName } from 'src/shared/constants/role.constant'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
-const SellerModules = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE']
+const SellerModules = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART']
+const ClientModules = ['AUTH', 'MEDIA', 'PROFILE', 'CART']
 
 const prisma = new PrismaService()
 
@@ -94,9 +95,15 @@ async function bootstrap() {
   const sellerRolePermissionIds = updatedPermissionInDb
     .filter((permission) => SellerModules.includes(permission.module))
     .map((permission) => ({ id: permission.id }))
+
+  const clientRolePermissionIds = updatedPermissionInDb
+    .filter((permission) => ClientModules.includes(permission.module))
+    .map((permission) => ({ id: permission.id }))
+
   await Promise.all([
     updateRolePermissions(adminRolePermissionIds, RoleName.Admin),
     updateRolePermissions(sellerRolePermissionIds, RoleName.Seller),
+    updateRolePermissions(clientRolePermissionIds, RoleName.Client),
   ])
   process.exit(0)
 }
