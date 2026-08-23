@@ -1,6 +1,7 @@
 import { UserStatus } from 'src/shared/constants/auth.constant'
 import { PermissionSchema } from 'src/shared/models/share-permission.model'
 import { RoleSchema } from 'src/shared/models/share-role.model'
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import z from 'zod'
 
 export const UserSchema = z.object({
@@ -15,9 +16,9 @@ export const UserSchema = z.object({
   roleId: z.number().positive(),
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  deletedAt: DateTimeSchema.nullable(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 })
 
 // Apply for Response of GET ('profile') and GET ('users/:id')

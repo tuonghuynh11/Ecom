@@ -1,4 +1,5 @@
 import { CategoryTranslationSchema } from 'src/routes/category/category-translation/category-translation.model'
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import { z } from 'zod'
 
 export const CategorySchema = z.object({
@@ -10,9 +11,9 @@ export const CategorySchema = z.object({
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),
-  deletedAt: z.iso.datetime().nullable(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  deletedAt: DateTimeSchema.nullable(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 })
 
 export const CategoryIncludeTranslationSchema = CategorySchema.extend({

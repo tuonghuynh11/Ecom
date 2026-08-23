@@ -1,4 +1,5 @@
 import { HTTPMethod } from 'src/shared/constants/role.constant'
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import z from 'zod'
 
 export const PermissionSchema = z.object({
@@ -19,9 +20,9 @@ export const PermissionSchema = z.object({
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  deletedAt: z.date().nullable(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
+  deletedAt: DateTimeSchema.nullable(),
 })
 
 export type PermissionType = z.infer<typeof PermissionSchema>

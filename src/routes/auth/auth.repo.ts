@@ -21,7 +21,7 @@ export class AuthRepository {
         password: true,
         totpSecret: true,
       },
-    })
+    }) as any
   }
   createUserIncludeRole(
     user: Pick<UserType, 'roleId' | 'avatar' | 'name' | 'email' | 'password' | 'phoneNumber'>,
@@ -31,7 +31,7 @@ export class AuthRepository {
       include: {
         role: true,
       },
-    })
+    }) as any
   }
   createVerificationCode(
     payload: Pick<VerificationCodeType, 'email' | 'type' | 'code' | 'expiresAt'>,
@@ -82,7 +82,7 @@ export class AuthRepository {
       include: {
         role: true,
       },
-    })
+    }) as any
   }
 
   findUniqueRefreshTokenIncludeUserRole(where: {
@@ -97,7 +97,7 @@ export class AuthRepository {
           },
         },
       },
-    })
+    }) as any
   }
   updateDevice(deviceId: number, data: Partial<DeviceType>): Promise<DeviceType> {
     return this.prismaService.device.update({
