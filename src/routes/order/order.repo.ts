@@ -1,18 +1,23 @@
 import { Injectable } from '@nestjs/common'
 import { OrderWhereInput } from 'src/generated/prisma/models'
 import {
+  CannotCancelOrderException,
   NotFoundCartItemException,
+  OrderNotFoundException,
   OutOfStockSKUException,
   ProductNotFoundException,
   SKUNotBelongToShopException,
 } from 'src/routes/order/order.error'
 import {
+  CancelOrderResType,
   CreateOrderBodyType,
   CreateOrderResType,
+  GetOrderDetailResType,
   GetOrderListQueryType,
   GetOrderListResType,
 } from 'src/routes/order/order.model'
 import { OrderStatus } from 'src/shared/constants/order.constant'
+import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
@@ -172,6 +177,56 @@ export class OrderRepo {
 
     return {
       data: orders,
+    }
+  }
+
+  async detail(userId: number, orderId: number): Promise<GetOrderDetailResType | null> {
+    const order = await this.prisma.order.findUnique({
+      where: {
+        userId,
+        id: orderId,
+        deletedAt: null,
+      },
+      include: {
+        items: true,
+      },
+    })
+    if (!order) {
+      throw OrderNotFoundException
+    }
+    return order
+  }
+
+  async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
+    try {
+      const order = await this.prisma.order.findUniqueOrThrow({
+        where: {
+          userId,
+          id: orderId,
+        },
+      })
+
+      if (order.status !== OrderStatus.PENDING_PAYMENT) {
+        throw CannotCancelOrderException
+      }
+
+      const updatedOrder = await this.prisma.order.update({
+        where: {
+          userId,
+          id: orderId,
+          deletedAt: null,
+        },
+        data: {
+          status: OrderStatus.CANCELLED,
+          updatedById: userId,
+        },
+      })
+      return updatedOrder
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw OrderNotFoundException
+      }
+      throw error
     }
   }
 }

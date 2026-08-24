@@ -13,4 +13,12 @@ export class OrderService {
   async create(userId: number, body: any) {
     return this.orderRepo.create(userId, body)
   }
+
+  async detail(userId: number, orderId: number) {
+    return this.orderRepo.detail(userId, orderId)
+  }
+
+  async cancel(userId: number, orderId: number) {
+    return this.orderRepo.cancel(userId, orderId)
+  }
 }
