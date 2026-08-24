@@ -9,4 +9,8 @@ export class OrderService {
   async list(userId: number, query: GetOrderListQueryType) {
     return this.orderRepo.list({ userId, query })
   }
+
+  async create(userId: number, body: any) {
+    return this.orderRepo.create(userId, body)
+  }
 }
