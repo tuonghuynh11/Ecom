@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Prisma } from 'src/generated/prisma/client'
-import {
-  NotEnoughStockSKUException,
-  NotFoundSKUException,
-  OutOfStockSKUException,
-  ProductNotFoundException,
-} from 'src/routes/cart/cart.error'
+import { NotFoundSKUException, OutOfStockSKUException, ProductNotFoundException } from 'src/routes/cart/cart.error'
 import {
   AddToCartBodyType,
   CartItemDetailType,
@@ -34,14 +29,9 @@ export class CartRepo {
       throw NotFoundSKUException
     }
     // Kiểm tra lượng hàng còn lại
-    if (sku.stock < 1) {
+    if (sku.stock < 1 || sku.stock < quantity) {
       throw OutOfStockSKUException
     }
-
-    if (sku.stock < quantity) {
-      throw NotEnoughStockSKUException
-    }
-
     const { product } = sku
 
     // Kiểm tra sản phẩm đã bị xóa hoặc có công khai hay không
@@ -66,7 +56,7 @@ export class CartRepo {
     limit: number
     page: number
   }): Promise<GetCartResType> {
-    const cartItems = (await this.prismaService.cartItem.findMany({
+    const cartItems = await this.prismaService.cartItem.findMany({
       where: {
         userId,
         sku: {
@@ -87,13 +77,7 @@ export class CartRepo {
                 productTranslations: {
                   where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
                 },
-                createdBy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    avatar: true,
-                  },
-                },
+                createdBy: true,
               },
             },
           },
@@ -102,7 +86,7 @@ export class CartRepo {
       orderBy: {
         updatedAt: 'desc',
       },
-    })) as any
+    })
     const groupMap = new Map<number, CartItemDetailType>()
     for (const cartItem of cartItems) {
       const shopId = cartItem.sku.product.createdById
@@ -127,7 +111,6 @@ export class CartRepo {
     }
   }
 
-  // Using raw SQL query to get cart items grouped by shop
   async list2({
     userId,
     languageId,
@@ -198,7 +181,7 @@ export class CartRepo {
                 ), '[]'::json)
               )
            )
-         )
+         ) ORDER BY "CartItem"."updatedAt" DESC
        ) AS "cartItems",
        jsonb_build_object(
          'id', "User"."id",
@@ -231,11 +214,35 @@ export class CartRepo {
       totalPages: Math.ceil(totalItems.length / limit),
     }
   }
-  async create(userId: number, body: AddToCartBodyType): Promise<CartItemType> {
-    await this.validateSKU(body.skuId, body.quantity)
 
-    return this.prismaService.cartItem.create({
-      data: {
+  async create(userId: number, body: AddToCartBodyType): Promise<CartItemType> {
+    const sku = await this.validateSKU(body.skuId, body.quantity)
+
+    const currentCartItem = await this.prismaService.cartItem.findUnique({
+      where: {
+        userId_skuId: {
+          userId,
+          skuId: body.skuId,
+        },
+      },
+    })
+    if (currentCartItem && currentCartItem.quantity + body.quantity > sku.stock) {
+      throw OutOfStockSKUException
+    }
+
+    return this.prismaService.cartItem.upsert({
+      where: {
+        userId_skuId: {
+          userId,
+          skuId: body.skuId,
+        },
+      },
+      update: {
+        quantity: {
+          increment: body.quantity,
+        },
+      },
+      create: {
         userId,
         skuId: body.skuId,
         quantity: body.quantity,
