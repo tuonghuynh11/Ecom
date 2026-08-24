@@ -428,7 +428,7 @@ model ProductSKUSnapshot {
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   /// [ProductTranslations]
-  productTranslationId Json
+  productTranslations Json
 
   createdAt DateTime @default(now())
 }

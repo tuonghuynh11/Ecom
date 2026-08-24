@@ -4,8 +4,8 @@ import { HTTPMethod } from 'src/generated/prisma/enums'
 import { RoleName } from 'src/shared/constants/role.constant'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
-const SellerModules = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART']
-const ClientModules = ['AUTH', 'MEDIA', 'PROFILE', 'CART']
+const SellerModules = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART', 'ORDERS']
+const ClientModules = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS']
 
 const prisma = new PrismaService()
 
