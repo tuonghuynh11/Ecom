@@ -15,7 +15,7 @@ if (!fs.existsSync(path.resolve('.env'))) {
 
 const configScheme = z.object({
   DATABASE_URL: z.string(),
-  SECRET_API_KEY: z.string(),
+  PAYMENT_SECRET_API_KEY: z.string(),
   ACCESS_TOKEN_SECRET: z.string(),
   ACCESS_TOKEN_EXPIRES_IN: z.string(),
   REFRESH_TOKEN_EXPIRES_IN: z.string(),
