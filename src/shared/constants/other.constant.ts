@@ -15,5 +15,7 @@ export const UPLOAD_DIR = path.resolve('upload')
 
 export const ALL_LANGUAGES_CODE = 'all'
 
+export const PREFIX_PAYMENT_CODE = 'DH'
+
 export type OrderByType = (typeof OrderBy)[keyof typeof OrderBy]
 export type SortByType = (typeof SortBy)[keyof typeof SortBy]

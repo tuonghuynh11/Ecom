@@ -11,6 +11,7 @@ import { CategoryModule } from 'src/routes/category/category.module'
 import { LanguageModule } from 'src/routes/languages/languages.module'
 import { MediaModule } from 'src/routes/media/media.module'
 import { OrderModule } from 'src/routes/order/order.module'
+import { PaymentModule } from 'src/routes/payment/payment.module'
 import { PermissionsModule } from 'src/routes/permissions/permissions.module'
 import { ProductTranslationModule } from 'src/routes/product/product-translation/product-translation.module'
 import { ProductModule } from 'src/routes/product/product.module'
@@ -41,6 +42,7 @@ import { SharedModule } from './shared/shared.module'
     ProductTranslationModule,
     CartModule,
     OrderModule,
+    PaymentModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
