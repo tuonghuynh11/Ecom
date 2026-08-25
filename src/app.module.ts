@@ -31,10 +31,7 @@ import { SharedModule } from './shared/shared.module'
   imports: [
     BullModule.forRoot({
       connection: {
-        host: envConfig.REDIS_HOST,
-        port: envConfig.REDIS_PORT ? parseInt(envConfig.REDIS_PORT) : 6379,
-        username: envConfig.REDIS_USERNAME,
-        password: envConfig.REDIS_PASSWORD,
+        url: envConfig.REDIS_URL,
       },
     }),
 

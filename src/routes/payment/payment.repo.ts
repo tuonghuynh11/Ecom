@@ -23,7 +23,7 @@ export class PaymentRepo {
     }, 0)
   }
 
-  async receiver(body: WebhookPaymentBodyType): Promise<MessageResType> {
+  async receiver(body: WebhookPaymentBodyType): Promise<MessageResType & { paymentId: number }> {
     // 1. Thêm thông tin thanh toán vào bảng PaymentTransaction
     // Tham khảo: https://docs.sepay.vn/lap-trinh-webhooks.html
     let amountIn = 0
@@ -76,12 +76,6 @@ export class PaymentRepo {
     const totalPrice = this.getTotalPrice(orders)
 
     if (totalPrice !== body.transferAmount) {
-      // Nếu không khớp thì cập nhật trạng thái:
-      //    + Payment thành "FAILED"
-      await this.prisma.payment.update({
-        where: { id: paymentId },
-        data: { status: PaymentStatus.FAILED },
-      })
       throw PriceNotMatchException(totalPrice, body.transferAmount)
     }
     // 3. Nếu khớp thì cập nhật trạng thái:
@@ -109,6 +103,9 @@ export class PaymentRepo {
       }),
     ])
 
-    return { message: 'Payment success' }
+    return {
+      message: 'Payment success',
+      paymentId,
+    }
   }
 }
