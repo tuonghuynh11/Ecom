@@ -60,7 +60,13 @@ export class OrderRepo {
     }
   }
 
-  async create(userId: number, body: CreateOrderBodyType): Promise<CreateOrderResType> {
+  async create(
+    userId: number,
+    body: CreateOrderBodyType,
+  ): Promise<{
+    paymentId: number
+    orders: CreateOrderResType['data']
+  }> {
     //1, Kiểm tra xem các cartItemIds có tồn tại trong CSDL hay không
 
     const allBodyCartItemIds = body.flatMap((item) => item.cartItemIds)
@@ -125,7 +131,7 @@ export class OrderRepo {
     }
 
     //5. Tạo Order và xóa cartItems trong transaction để đảm bảo tính toàn vẹn dữ liệu
-    const orders = await this.prisma.$transaction(async (tx) => {
+    const [payment, orders] = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           status: PaymentStatus.PENDING,
@@ -193,11 +199,12 @@ export class OrderRepo {
         }),
       )
       const [orders] = await Promise.all([orders$, cartItems$, sku$])
-      return orders
+      return [payment, orders]
     })
 
     return {
-      data: orders,
+      paymentId: payment.id,
+      orders,
     }
   }
 

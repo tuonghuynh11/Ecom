@@ -1,8 +1,10 @@
+import { BullModule } from '@nestjs/bullmq'
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import * as path from 'path'
+import { PaymentConsumer } from 'src/queues/payment.consumer'
 import { BrandTranslationModule } from 'src/routes/brand/brand-translation/brand-translation.module'
 import { BrandModule } from 'src/routes/brand/brand.module'
 import { CartModule } from 'src/routes/cart/cart.module'
@@ -18,6 +20,7 @@ import { ProductModule } from 'src/routes/product/product.module'
 import { ProfileModule } from 'src/routes/profile/profile.module'
 import { RolesModule } from 'src/routes/roles/roles.module'
 import { UserModule } from 'src/routes/user/user.module'
+import envConfig from 'src/shared/config'
 import { HttpExceptionFilter } from 'src/shared/filters/http-exception.filter'
 import CustomZodValidationPipe from 'src/shared/pipes/custom-zod-validation.pipe'
 import { AppController } from './app.controller'
@@ -26,6 +29,15 @@ import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
 @Module({
   imports: [
+    BullModule.forRoot({
+      connection: {
+        host: envConfig.REDIS_HOST,
+        port: envConfig.REDIS_PORT ? parseInt(envConfig.REDIS_PORT) : 6379,
+        username: envConfig.REDIS_USERNAME,
+        password: envConfig.REDIS_PASSWORD,
+      },
+    }),
+
     SharedModule,
     AuthModule,
     LanguageModule,
@@ -70,6 +82,7 @@ import { SharedModule } from './shared/shared.module'
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
     },
+    PaymentConsumer,
   ],
 })
 export class AppModule {}

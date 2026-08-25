@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtModule } from '@nestjs/jwt'
 import { PaymentAPIKeyGuard } from 'src/shared/guards/payment-api-key.guard'
+import { SharedPaymentRepository } from 'src/shared/repositories/shared-payment.repo'
 import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
@@ -20,6 +21,7 @@ const sharedServices = [
   EmailService,
   SharedUserRepository,
   SharedRoleRepository,
+  SharedPaymentRepository,
   TwoFactorAuthService,
   S3Service,
 ]

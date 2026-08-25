@@ -37,6 +37,10 @@ const configScheme = z.object({
   S3_BUCKET_NAME: z.string(),
   S3_ACCESS_KEY: z.string(),
   S3_SECRET_KEY: z.string(),
+  REDIS_HOST: z.string(),
+  REDIS_PORT: z.string(),
+  REDIS_USERNAME: z.string(),
+  REDIS_PASSWORD: z.string(),
 })
 
 const configServer = configScheme.safeParse(process.env)

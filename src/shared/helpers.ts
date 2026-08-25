@@ -25,3 +25,7 @@ export function generateRandomFilename(originalFilename: string): string {
   const uuid = uuidv4()
   return `${uuid}${extension}`
 }
+
+export function generateCancelPaymentJobId(paymentId: number): string {
+  return `paymentId-${paymentId}`
+}
