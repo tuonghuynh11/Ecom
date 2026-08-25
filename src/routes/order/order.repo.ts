@@ -16,6 +16,7 @@ import {
   GetOrderListQueryType,
   GetOrderListResType,
 } from 'src/routes/order/order.model'
+import { OrderProducer } from 'src/routes/order/order.producer'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
@@ -23,7 +24,10 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
 export class OrderRepo {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly orderProducer: OrderProducer,
+  ) {}
 
   async list({ userId, query }: { userId: number; query: GetOrderListQueryType }): Promise<GetOrderListResType> {
     const { page, limit, status } = query
@@ -198,7 +202,9 @@ export class OrderRepo {
           })
         }),
       )
-      const [orders] = await Promise.all([orders$, cartItems$, sku$])
+      const cancelPaymentJob$ = this.orderProducer.cancelPaymentJob(payment.id)
+
+      const [orders] = await Promise.all([orders$, cartItems$, sku$, cancelPaymentJob$])
       return [payment, orders]
     })
 
