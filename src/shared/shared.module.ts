@@ -5,6 +5,7 @@ import { PaymentAPIKeyGuard } from 'src/shared/guards/payment-api-key.guard'
 import { SharedPaymentRepository } from 'src/shared/repositories/shared-payment.repo'
 import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
+import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket.repo'
 import { TwoFactorAuthService } from 'src/shared/services/2fa.service'
 import { EmailService } from 'src/shared/services/email.service'
 import { S3Service } from 'src/shared/services/s3.service'
@@ -23,6 +24,7 @@ const sharedServices = [
   SharedRoleRepository,
   SharedPaymentRepository,
   TwoFactorAuthService,
+  SharedWebsocketRepository,
   S3Service,
 ]
 

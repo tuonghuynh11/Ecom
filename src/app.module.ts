@@ -23,6 +23,7 @@ import { UserModule } from 'src/routes/user/user.module'
 import envConfig from 'src/shared/config'
 import { HttpExceptionFilter } from 'src/shared/filters/http-exception.filter'
 import CustomZodValidationPipe from 'src/shared/pipes/custom-zod-validation.pipe'
+import { WebsocketModule } from 'src/websockets/websocket.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './routes/auth/auth.module'
@@ -52,6 +53,7 @@ import { SharedModule } from './shared/shared.module'
     CartModule,
     OrderModule,
     PaymentModule,
+    WebsocketModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {

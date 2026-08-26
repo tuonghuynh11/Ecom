@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import envConfig from 'src/shared/config'
+import { WebsocketAdapter } from 'src/websockets/websocket.adapter'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
@@ -9,7 +10,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
   })
-
+  app.useWebSocketAdapter(new WebsocketAdapter(app))
   // app.useStaticAssets(UPLOAD_DIR, {
   //   prefix: '/media/static',
   // })
