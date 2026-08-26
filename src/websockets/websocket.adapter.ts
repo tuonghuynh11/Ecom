@@ -1,6 +1,7 @@
 import { INestApplicationContext, UnauthorizedException } from '@nestjs/common'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { Server, ServerOptions, Socket } from 'socket.io'
+import { generateRoomUserId } from 'src/shared/helpers'
 import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket.repo'
 import { TokenService } from 'src/shared/services/token.service'
 
@@ -53,13 +54,15 @@ export class WebsocketAdapter extends IoAdapter {
 
     try {
       const { userId } = await this.tokenService.verifyAccessToken(accessToken)
-      await this.sharedWebsocketRepository.create({
-        userId, // Replace with actual user ID from access token
-        socketId: socket.id,
-      })
-      socket.on('disconnect', async () => {
-        await this.sharedWebsocketRepository.delete(socket.id).catch((err) => {})
-      })
+      await socket.join(generateRoomUserId(userId))
+
+      // await this.sharedWebsocketRepository.create({
+      //   userId, // Replace with actual user ID from access token
+      //   socketId: socket.id,
+      // })
+      // socket.on('disconnect', async () => {
+      //   await this.sharedWebsocketRepository.delete(socket.id).catch((err) => {})
+      // })
       next()
     } catch (error) {
       next(error)

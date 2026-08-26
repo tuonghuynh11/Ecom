@@ -42,3 +42,7 @@ export function createPaymentVietQR({ amount, content }: { amount: number; conte
 
   return `https://vietqr.app/img?${params}`
 }
+
+export function generateRoomUserId(userId: number): string {
+  return `userId-${userId}`
+}
