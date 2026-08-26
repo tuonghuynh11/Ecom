@@ -1,13 +1,38 @@
 import { Injectable } from '@nestjs/common'
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
+import { Server } from 'socket.io'
 import { WebhookPaymentBodyType } from 'src/routes/payment/payment.model'
 import { PaymentRepo } from 'src/routes/payment/payment.repo'
-import { MessageResType } from 'src/shared/models/response.model'
+import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket.repo'
 
+@WebSocketGateway({
+  namespace: 'payment',
+})
 @Injectable()
 export class PaymentService {
-  constructor(private readonly paymentRepo: PaymentRepo) {}
+  @WebSocketServer()
+  server!: Server
+  constructor(
+    private readonly paymentRepo: PaymentRepo,
 
-  receiver(body: WebhookPaymentBodyType): Promise<MessageResType> {
-    return this.paymentRepo.receiver(body)
+    private readonly sharedWebsocketRepository: SharedWebsocketRepository,
+  ) {}
+
+  async receiver(body: WebhookPaymentBodyType) {
+    const userID = await this.paymentRepo.receiver(body)
+    try {
+      const websockets = await this.sharedWebsocketRepository.findByUserId(userID)
+      websockets.forEach((ws) => {
+        this.server.to(ws.id).emit('payment', {
+          status: 'success',
+        })
+      })
+      console.info(`Payment notification sent to user ${userID} via websockets.`)
+    } catch (error) {
+      console.error('Error sending payment notification (websocket):', error)
+    }
+    return {
+      message: 'Payment received successfully',
+    }
   }
 }

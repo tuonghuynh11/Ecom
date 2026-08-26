@@ -10,7 +10,6 @@ import { WebhookPaymentBodyType } from 'src/routes/payment/payment.model'
 import { PaymentProducer } from 'src/routes/payment/payment.producer'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
-import { MessageResType } from 'src/shared/models/response.model'
 import { OrderIncludeProductSKUSnapshotType } from 'src/shared/models/shared-order.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
@@ -29,7 +28,7 @@ export class PaymentRepo {
     }, 0)
   }
 
-  async receiver(body: WebhookPaymentBodyType): Promise<MessageResType> {
+  async receiver(body: WebhookPaymentBodyType): Promise<number> {
     // 1. Thêm thông tin thanh toán vào bảng PaymentTransaction
     // Tham khảo: https://docs.sepay.vn/lap-trinh-webhooks.html
     let amountIn = 0
@@ -50,7 +49,7 @@ export class PaymentRepo {
       throw TransactionAlreadyExistsException(body.id)
     }
 
-    const paymentId = await this.prisma.$transaction(async (tx) => {
+    const userId = await this.prisma.$transaction(async (tx) => {
       const createPaymentTransaction$ = tx.paymentTransaction.create({
         data: {
           id: body.id,
@@ -89,6 +88,8 @@ export class PaymentRepo {
       if (!payment) {
         throw PaymentNotFoundException(paymentId)
       }
+
+      const userId = payment.orders[0]?.userId
       const { orders } = payment
 
       const totalPrice = this.getTotalPrice(orders)
@@ -120,11 +121,9 @@ export class PaymentRepo {
       })
       const removeJob$ = this.paymentProducer.removeJob(paymentId)
       await Promise.all([createPaymentTransaction$, payment$, order$, removeJob$])
-      return paymentId
+      return userId
     })
 
-    return {
-      message: 'Payment success',
-    }
+    return userId
   }
 }

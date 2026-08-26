@@ -20,4 +20,11 @@ export class SharedWebsocketRepository {
       },
     })
   }
+  findByUserId(userId: number) {
+    return this.prismaService.websocket.findMany({
+      where: {
+        userId: userId,
+      },
+    })
+  }
 }
