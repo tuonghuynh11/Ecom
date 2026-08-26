@@ -19,7 +19,7 @@ import {
 import { OrderProducer } from 'src/routes/order/order.producer'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
-import { isNotFoundPrismaError } from 'src/shared/helpers'
+import { createPaymentVietQR, isNotFoundPrismaError } from 'src/shared/helpers'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
@@ -69,6 +69,7 @@ export class OrderRepo {
     body: CreateOrderBodyType,
   ): Promise<{
     paymentId: number
+    paymentQR: string
     orders: CreateOrderResType['data']
   }> {
     //1, Kiểm tra xem các cartItemIds có tồn tại trong CSDL hay không
@@ -135,7 +136,7 @@ export class OrderRepo {
     }
 
     //5. Tạo Order và xóa cartItems trong transaction để đảm bảo tính toàn vẹn dữ liệu
-    const [payment, orders] = await this.prisma.$transaction(async (tx) => {
+    const [payment, orders, paymentQR] = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           status: PaymentStatus.PENDING,
@@ -205,11 +206,18 @@ export class OrderRepo {
       const cancelPaymentJob$ = this.orderProducer.cancelPaymentJob(payment.id)
 
       const [orders] = await Promise.all([orders$, cartItems$, sku$, cancelPaymentJob$])
-      return [payment, orders]
+
+      const totalPrice = cartItems.reduce((total, item) => total + item.sku.price * item.quantity, 0)
+      const paymentQR = createPaymentVietQR({
+        amount: totalPrice,
+        content: `DH${payment.id}`,
+      })
+      return [payment, orders, paymentQR]
     })
 
     return {
       paymentId: payment.id,
+      paymentQR,
       orders,
     }
   }

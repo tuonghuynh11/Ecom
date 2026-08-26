@@ -2,6 +2,7 @@ import { randomInt } from 'crypto'
 import { Prisma } from '../generated/prisma/client'
 
 import path from 'path'
+import envConfig from 'src/shared/config'
 import { v4 as uuidv4 } from 'uuid'
 
 export function isUniqueConstraintPrismaError(error: any): error is Prisma.PrismaClientKnownRequestError {
@@ -28,4 +29,16 @@ export function generateRandomFilename(originalFilename: string): string {
 
 export function generateCancelPaymentJobId(paymentId: number): string {
   return `paymentId-${paymentId}`
+}
+
+export function createPaymentVietQR({ amount, content }: { amount: number; content: string }): string {
+  const params = new URLSearchParams({
+    bank: envConfig.BANK_NAME.toString(),
+    acc: envConfig.BANK_ACCOUNT.toString(),
+    amount: amount.toString(),
+    des: content,
+    template: 'compact',
+  })
+
+  return `https://vietqr.app/img?${params}`
 }

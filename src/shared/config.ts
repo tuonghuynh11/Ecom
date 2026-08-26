@@ -38,6 +38,8 @@ const configScheme = z.object({
   S3_ACCESS_KEY: z.string(),
   S3_SECRET_KEY: z.string(),
   REDIS_URL: z.string(),
+  BANK_ACCOUNT: z.string(),
+  BANK_NAME: z.string(),
 })
 
 const configServer = configScheme.safeParse(process.env)

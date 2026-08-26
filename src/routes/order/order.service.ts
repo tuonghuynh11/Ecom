@@ -14,6 +14,7 @@ export class OrderService {
     const result = await this.orderRepo.create(userId, body)
     return {
       data: result.orders,
+      paymentQR: result.paymentQR,
     }
   }
 
