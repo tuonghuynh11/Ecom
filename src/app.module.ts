@@ -20,6 +20,7 @@ import { PermissionsModule } from 'src/routes/permissions/permissions.module'
 import { ProductTranslationModule } from 'src/routes/product/product-translation/product-translation.module'
 import { ProductModule } from 'src/routes/product/product.module'
 import { ProfileModule } from 'src/routes/profile/profile.module'
+import { ReviewModule } from 'src/routes/review/review.module'
 import { RolesModule } from 'src/routes/roles/roles.module'
 import { UserModule } from 'src/routes/user/user.module'
 import envConfig from 'src/shared/config'
@@ -84,6 +85,7 @@ import { SharedModule } from './shared/shared.module'
     ProductTranslationModule,
     CartModule,
     OrderModule,
+    ReviewModule,
     PaymentModule,
     WebsocketModule,
   ],

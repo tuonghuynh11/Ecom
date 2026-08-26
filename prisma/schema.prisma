@@ -441,6 +441,7 @@ model Order {
   status      OrderStatus
   items       ProductSKUSnapshot[]
   products    Product[]
+  reviews     Review[]
   /// [Receiver]
   receiver    Json
   shopId      Int?
@@ -483,11 +484,30 @@ model Review {
   rating    Int
   productId Int
   product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userId    Int
   user      User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  medias      ReviewMedia[]
+  updateCount Int           @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([orderId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model ReviewMedia {
+  id       Int       @id @default(autoincrement())
+  url      String    @db.VarChar(1000)
+  type     MediaType
+  reviewId Int
+  review   Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  createdAt DateTime @default(now())
 }
 
 model PaymentTransaction {
@@ -555,4 +575,9 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
 }
