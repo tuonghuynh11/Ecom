@@ -38,6 +38,9 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
   })
+
+  app.set('trust proxy', 'loopback') // Trust requests from the loopback address
+
   app.useWebSocketAdapter(websocketAdapter)
 
   await app.listen(envConfig.PORT ?? 3000)

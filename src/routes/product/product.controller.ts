@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common'
 import { ApiParam, ApiQuery } from '@nestjs/swagger'
+import { SkipThrottle } from '@nestjs/throttler'
 import { ZodResponse } from 'nestjs-zod'
 import {
   GetProductDetailResDTO,
@@ -8,9 +9,10 @@ import {
   GetProductsResDTO,
 } from 'src/routes/product/product.dto'
 import { ProductService } from 'src/routes/product/product.service'
-import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { OrderBy, SortBy } from 'src/shared/constants/other.constant'
+import { IsPublic } from 'src/shared/decorators/auth.decorator'
 
+@SkipThrottle()
 @Controller('products')
 @IsPublic()
 export class ProductController {
