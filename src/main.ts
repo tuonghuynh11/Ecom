@@ -6,11 +6,15 @@ import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
+
+  const websocketAdapter = new WebsocketAdapter(app)
+  await websocketAdapter.connectToRedis()
+
   app.setGlobalPrefix('api')
   app.enableCors({
     origin: '*',
   })
-  app.useWebSocketAdapter(new WebsocketAdapter(app))
+  app.useWebSocketAdapter(websocketAdapter)
   // app.useStaticAssets(UPLOAD_DIR, {
   //   prefix: '/media/static',
   // })
