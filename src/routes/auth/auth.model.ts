@@ -1,4 +1,5 @@
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constant'
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import { UserSchema } from 'src/shared/models/shared-user.model'
 import z from 'zod'
 
@@ -30,7 +31,7 @@ export const RegisterResSchema = UserSchema.omit({
 
 export const VerificationCodeSchema = z.object({
   id: z.number(),
-  email: z.string().email(),
+  email: z.email(),
   code: z.string().length(6),
   type: z.enum([
     TypeOfVerificationCode.REGISTER,
@@ -38,8 +39,8 @@ export const VerificationCodeSchema = z.object({
     TypeOfVerificationCode.LOGIN,
     TypeOfVerificationCode.DISABLE_2FA,
   ]),
-  expiresAt: z.date(),
-  createdAt: z.date(),
+  expiresAt: DateTimeSchema,
+  createdAt: DateTimeSchema,
 })
 
 export const SendOTPBodySchema = VerificationCodeSchema.pick({
@@ -90,8 +91,8 @@ export const DeviceSchema = z.object({
   userId: z.number(),
   userAgent: z.string(),
   ip: z.string(),
-  lastActive: z.date(),
-  createdAt: z.date(),
+  lastActive: DateTimeSchema,
+  createdAt: DateTimeSchema,
   isActive: z.boolean(),
 })
 
@@ -99,8 +100,8 @@ export const RefreshTokenSchema = z.object({
   token: z.string(),
   userId: z.number(),
   deviceId: z.number(),
-  expiresAt: z.date(),
-  createdAt: z.date(),
+  expiresAt: DateTimeSchema,
+  createdAt: DateTimeSchema,
 })
 
 export const LogoutBodySchema = RefreshTokenBodySchema
@@ -116,7 +117,7 @@ export const GetAuthorizationUrlResSchema = z.object({
 
 export const ForgotPasswordBodySchema = z
   .object({
-    email: z.string().email(),
+    email: z.email(),
     code: z.string().length(6),
     newPassword: z.string().min(6).max(100),
     confirmNewPassword: z.string().min(6).max(100),

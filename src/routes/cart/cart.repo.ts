@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Injectable } from '@nestjs/common'
 import { Prisma } from 'src/generated/prisma/client'
 import {
@@ -15,10 +16,12 @@ import {
   UpdateCartItemBodyType,
 } from 'src/routes/cart/cart.model'
 import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { SKUSchemaType } from 'src/shared/models/shared-sku.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class CartRepo {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -73,7 +76,7 @@ export class CartRepo {
     ) {
       throw ProductNotFoundException
     }
-    return sku
+    return sku as any
   }
 
   async list({
@@ -125,7 +128,7 @@ export class CartRepo {
         if (!groupMap.has(shopId)) {
           groupMap.set(shopId, { shop: cartItem.sku.product.createdBy, cartItems: [] })
         }
-        groupMap.get(shopId)?.cartItems.push(cartItem)
+        groupMap.get(shopId)?.cartItems.push(cartItem as any)
       }
     }
     const sortedGroups = Array.from(groupMap.values())
@@ -271,7 +274,7 @@ export class CartRepo {
         skuId: body.skuId,
         quantity: body.quantity,
       },
-    })
+    }) as any
   }
 
   async update({
@@ -300,7 +303,7 @@ export class CartRepo {
         quantity: body.quantity,
         updatedAt: new Date(),
       },
-    })
+    }) as any
   }
 
   delete(userId: number, body: DeleteCartBodyType): Promise<{ count: number }> {

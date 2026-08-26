@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { PermissionType } from 'src/shared/models/share-permission.model'
 import { RoleType } from 'src/shared/models/share-role.model'
 import { UserType } from 'src/shared/models/shared-user.model'
@@ -10,6 +11,7 @@ export type UserIncludeRolePermissionType = UserType & { role: RoleType & { perm
 export type WhereUniqueUserType = { id: number } | { email: string }
 
 @Injectable()
+@SerializeAll()
 export class SharedUserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -19,7 +21,7 @@ export class SharedUserRepository {
         ...where,
         deletedAt: null,
       },
-    })
+    }) as any
   }
   findUniqueIncludeRolePermissions(where: WhereUniqueUserType): Promise<UserIncludeRolePermissionType | null> {
     return this.prismaService.user.findFirst({
@@ -38,7 +40,7 @@ export class SharedUserRepository {
           },
         },
       },
-    })
+    }) as any
   }
 
   update(where: { id: number }, data: Partial<UserType>): Promise<UserType | null> {
@@ -48,6 +50,6 @@ export class SharedUserRepository {
         deletedAt: null,
       },
       data,
-    })
+    }) as any
   }
 }

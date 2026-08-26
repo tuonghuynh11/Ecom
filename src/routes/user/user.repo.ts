@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { CreateUserBodyType, GetUsersQueryType, GetUsersResType } from 'src/routes/user/user.model'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { UserType } from 'src/shared/models/shared-user.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class UserRepo {
   constructor(private prismaService: PrismaService) {}
 
@@ -28,7 +30,7 @@ export class UserRepo {
       }),
     ])
     return {
-      data,
+      data: data as any,
       totalItems,
       page: pagination.page,
       limit: pagination.limit,
@@ -42,7 +44,7 @@ export class UserRepo {
         ...data,
         createdById,
       },
-    })
+    }) as any
   }
 
   delete(
@@ -56,12 +58,12 @@ export class UserRepo {
     isHard?: boolean,
   ): Promise<UserType> {
     return isHard
-      ? this.prismaService.user.delete({
+      ? (this.prismaService.user.delete({
           where: {
             id,
           },
-        })
-      : this.prismaService.user.update({
+        }) as any)
+      : (this.prismaService.user.update({
           where: {
             id,
             deletedAt: null,
@@ -70,6 +72,6 @@ export class UserRepo {
             deletedAt: new Date(),
             deletedById,
           },
-        })
+        }) as any)
   }
 }

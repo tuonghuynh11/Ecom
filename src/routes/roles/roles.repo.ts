@@ -8,10 +8,12 @@ import {
   GetRolesResType,
   UpdateRoleBodyType,
 } from 'src/routes/roles/roles.model'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { RoleType } from 'src/shared/models/share-role.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class RolesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -44,7 +46,7 @@ export class RolesRepository {
     ])
 
     return {
-      data,
+      data: data as any,
       totalItems,
       page,
       limit,
@@ -60,7 +62,7 @@ export class RolesRepository {
           where: { deletedAt: null },
         },
       },
-    })
+    }) as any
   }
 
   create({ payload, createdById }: { payload: CreateRoleBodyType; createdById: number }): Promise<RoleType> {
@@ -69,7 +71,7 @@ export class RolesRepository {
         ...payload,
         createdById,
       },
-    })
+    }) as any
   }
 
   async update({
@@ -105,7 +107,7 @@ export class RolesRepository {
           where: { deletedAt: null },
         },
       },
-    })
+    }) as any
   }
 
   delete({ id, deletedById, isHard }: { id: number; deletedById: number; isHard?: boolean }) {

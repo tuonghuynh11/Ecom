@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Injectable } from '@nestjs/common'
 import {
   BrandIncludeTranslationType,
@@ -7,10 +8,12 @@ import {
   UpdateBrandBodyType,
 } from 'src/routes/brand/brand.model'
 import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { PaginationQueryType } from 'src/shared/models/request.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class BrandRepo {
   constructor(private prismaService: PrismaService) {}
 
@@ -37,7 +40,7 @@ export class BrandRepo {
         },
         skip,
         take,
-      }),
+      }) as any,
     ])
     return {
       data,
@@ -59,7 +62,7 @@ export class BrandRepo {
           where: languageId == ALL_LANGUAGES_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
         },
       },
-    })
+    }) as any
   }
 
   create({
@@ -79,10 +82,10 @@ export class BrandRepo {
           where: { deletedAt: null },
         },
       },
-    })
+    }) as any
   }
 
-  async update({
+  update({
     id,
     updatedById,
     data,
@@ -105,7 +108,7 @@ export class BrandRepo {
           where: { deletedAt: null },
         },
       },
-    })
+    }) as any
   }
 
   delete(
@@ -119,12 +122,12 @@ export class BrandRepo {
     isHard?: boolean,
   ): Promise<BrandType> {
     return isHard
-      ? this.prismaService.brand.delete({
+      ? (this.prismaService.brand.delete({
           where: {
             id,
           },
-        })
-      : this.prismaService.brand.update({
+        }) as any)
+      : (this.prismaService.brand.update({
           where: {
             id,
             deletedAt: null,
@@ -133,6 +136,6 @@ export class BrandRepo {
             deletedAt: new Date(),
             deletedById,
           },
-        })
+        }) as any)
   }
 }

@@ -97,7 +97,7 @@ export class GoogleService {
         userId: user.id,
         userAgent,
         ip,
-        lastActive: new Date(),
+        lastActive: new Date().toISOString(),
         isActive: true,
       })
       // 6. Tạo access token và refresh token cho user

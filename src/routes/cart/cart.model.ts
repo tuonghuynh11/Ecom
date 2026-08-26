@@ -1,3 +1,4 @@
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import { ProductTranslationSchema } from 'src/shared/models/shared-product-translation.model'
 import { ProductSchema } from 'src/shared/models/shared-product.model'
 import { SKUSchema } from 'src/shared/models/shared-sku.model'
@@ -10,8 +11,8 @@ export const CartItemSchema = z.object({
   skuId: z.number(),
   userId: z.number(),
 
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 })
 
 export const GetCartItemParamsSchema = z.object({

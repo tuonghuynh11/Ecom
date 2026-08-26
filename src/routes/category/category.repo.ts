@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Injectable } from '@nestjs/common'
 import {
   CategoryIncludeTranslationType,
@@ -7,9 +8,11 @@ import {
   UpdateCategoryBodyType,
 } from 'src/routes/category/category.model'
 import { ALL_LANGUAGES_CODE } from 'src/shared/constants/other.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class CategoryRepo {
   constructor(private prismaService: PrismaService) {}
 
@@ -20,7 +23,7 @@ export class CategoryRepo {
     parentCategoryId?: number | null
     languageId: string
   }): Promise<GetAllCategoriesResType> {
-    const categories = await this.prismaService.category.findMany({
+    const categories = (await this.prismaService.category.findMany({
       where: {
         deletedAt: null,
         parentCategoryId: parentCategoryId ?? null,
@@ -33,7 +36,7 @@ export class CategoryRepo {
       orderBy: {
         createdAt: 'desc',
       },
-    })
+    })) as any
 
     return {
       data: categories,
@@ -42,7 +45,7 @@ export class CategoryRepo {
   }
 
   async findAllNotCondition({ languageId }: { languageId: string }): Promise<GetAllCategoriesResType> {
-    const categories = await this.prismaService.category.findMany({
+    const categories = (await this.prismaService.category.findMany({
       where: {
         deletedAt: null,
       },
@@ -54,7 +57,7 @@ export class CategoryRepo {
       orderBy: {
         createdAt: 'desc',
       },
-    })
+    })) as any
 
     return {
       data: categories,
@@ -73,7 +76,7 @@ export class CategoryRepo {
           where: languageId === ALL_LANGUAGES_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
         },
       },
-    })
+    }) as any
   }
 
   create({
@@ -93,10 +96,10 @@ export class CategoryRepo {
           where: { deletedAt: null },
         },
       },
-    })
+    }) as any
   }
 
-  async update({
+  update({
     id,
     updatedById,
     data,
@@ -119,7 +122,7 @@ export class CategoryRepo {
           where: { deletedAt: null },
         },
       },
-    })
+    }) as any
   }
 
   delete(
@@ -133,12 +136,12 @@ export class CategoryRepo {
     isHard?: boolean,
   ): Promise<CategoryType> {
     return isHard
-      ? this.prismaService.category.delete({
+      ? (this.prismaService.category.delete({
           where: {
             id,
           },
-        })
-      : this.prismaService.category.update({
+        }) as any)
+      : (this.prismaService.category.update({
           where: {
             id,
             deletedAt: null,
@@ -147,6 +150,6 @@ export class CategoryRepo {
             deletedAt: new Date(),
             deletedById,
           },
-        })
+        }) as any)
   }
 }

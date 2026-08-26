@@ -9,10 +9,12 @@ import {
   UpdateProductBodyType,
 } from 'src/routes/product/product.model'
 import { ALL_LANGUAGES_CODE, OrderByType, SortBy, SortByType } from 'src/shared/constants/other.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { ProductType } from 'src/shared/models/shared-product.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class ProductRepo {
   constructor(private readonly prismaService: PrismaService) {}
 

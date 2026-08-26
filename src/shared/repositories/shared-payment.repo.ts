@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class SharedPaymentRepository {
   constructor(private readonly prismaService: PrismaService) {}
   async cancelPaymentAndOrder(paymentId: number) {

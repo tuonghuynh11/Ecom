@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Injectable } from '@nestjs/common'
 import { OrderWhereInput } from 'src/generated/prisma/models'
 import {
@@ -19,10 +20,12 @@ import {
 import { OrderProducer } from 'src/routes/order/order.producer'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { createPaymentVietQR, isNotFoundPrismaError } from 'src/shared/helpers'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class OrderRepo {
   constructor(
     private readonly prisma: PrismaService,
@@ -56,7 +59,7 @@ export class OrderRepo {
 
     const [totalItems, data] = await Promise.all([totalItems$, data$])
     return {
-      data,
+      data: data as any,
       page,
       limit,
       totalItems,
@@ -218,7 +221,7 @@ export class OrderRepo {
     return {
       paymentId: payment.id,
       paymentQR,
-      orders,
+      orders: orders as any,
     }
   }
 
@@ -236,7 +239,7 @@ export class OrderRepo {
     if (!order) {
       throw OrderNotFoundException
     }
-    return order
+    return order as any
   }
 
   async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
@@ -263,7 +266,7 @@ export class OrderRepo {
           updatedById: userId,
         },
       })
-      return updatedOrder
+      return updatedOrder as any
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw OrderNotFoundException

@@ -1,4 +1,5 @@
 import { OrderStatus } from 'src/shared/constants/order.constant'
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import { z } from 'zod'
 
 export const OrderStatusSchema = z.enum([
@@ -25,9 +26,9 @@ export const OrderSchema = z.object({
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  deletedAt: DateTimeSchema.nullable(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 })
 
 export const ProductSKUSnapshotSchema = z.object({
@@ -49,7 +50,7 @@ export const ProductSKUSnapshotSchema = z.object({
   orderId: z.number().nullable(),
   quantity: z.number(),
 
-  createdAt: z.date(),
+  createdAt: DateTimeSchema,
 })
 
 export const OrderIncludeProductSKUSnapshotSchema = OrderSchema.extend({

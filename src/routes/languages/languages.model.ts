@@ -1,3 +1,4 @@
+import { DateTimeSchema } from 'src/shared/models/shared-other.model'
 import { z } from 'zod'
 
 export const LanguageSchema = z.object({
@@ -5,9 +6,9 @@ export const LanguageSchema = z.object({
   name: z.string().max(500),
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  deletedAt: DateTimeSchema.nullable(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 })
 
 export const GetLanguagesResSchema = z.object({

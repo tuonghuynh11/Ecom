@@ -71,7 +71,7 @@ export class AuthService {
     }
 
     // 2. Check OTP code is expired or not
-    if (verificationCode.expiresAt < new Date()) {
+    if (new Date(verificationCode.expiresAt) < new Date()) {
       throw OTPExpiredException
     }
     return verificationCode
@@ -136,7 +136,7 @@ export class AuthService {
       code: otp.toString(),
       email: payload.email,
       type: payload.type,
-      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN as StringValue)),
+      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN as StringValue)).toISOString(),
     })
 
     //3. Gửi OTP code về email
@@ -205,7 +205,7 @@ export class AuthService {
       userId: user.id,
       userAgent: body.userAgent,
       ip: body.ip,
-      lastActive: new Date(),
+      lastActive: new Date().toISOString(),
       isActive: true,
     })
 

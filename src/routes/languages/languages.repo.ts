@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Injectable } from '@nestjs/common'
 import { CreateLanguageBodyType, LanguageType, UpdateLanguageBodyType } from 'src/routes/languages/languages.model'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class LanguageRepo {
   constructor(private prismaService: PrismaService) {}
 
@@ -11,7 +14,7 @@ export class LanguageRepo {
       where: {
         deletedAt: null,
       },
-    })
+    }) as any
   }
 
   findById(id: string): Promise<LanguageType | null> {
@@ -20,7 +23,7 @@ export class LanguageRepo {
         id,
         deletedAt: null,
       },
-    })
+    }) as any
   }
 
   create({ createdById, data }: { createdById: number; data: CreateLanguageBodyType }): Promise<LanguageType> {
@@ -29,7 +32,7 @@ export class LanguageRepo {
         ...data,
         createdById,
       },
-    })
+    }) as any
   }
 
   update({
@@ -50,17 +53,17 @@ export class LanguageRepo {
         ...data,
         updatedById,
       },
-    })
+    }) as any
   }
 
   delete(id: string, isHard?: boolean): Promise<LanguageType> {
     return isHard
-      ? this.prismaService.language.delete({
+      ? (this.prismaService.language.delete({
           where: {
             id,
           },
-        })
-      : this.prismaService.language.update({
+        }) as any)
+      : (this.prismaService.language.update({
           where: {
             id,
             deletedAt: null,
@@ -68,6 +71,6 @@ export class LanguageRepo {
           data: {
             deletedAt: new Date(),
           },
-        })
+        }) as any)
   }
 }

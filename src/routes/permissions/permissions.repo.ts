@@ -6,9 +6,11 @@ import {
   GetPermissionsResType,
   UpdatePermissionBodyType,
 } from 'src/routes/permissions/permissions.model'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class PermissionsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -26,7 +28,7 @@ export class PermissionsRepository {
     ])
 
     return {
-      data,
+      data: data as any,
       totalItems,
       page,
       limit,

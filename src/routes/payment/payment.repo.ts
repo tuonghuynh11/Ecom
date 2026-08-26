@@ -10,10 +10,12 @@ import { WebhookPaymentBodyType } from 'src/routes/payment/payment.model'
 import { PaymentProducer } from 'src/routes/payment/payment.producer'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { OrderIncludeProductSKUSnapshotType } from 'src/shared/models/shared-order.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class PaymentRepo {
   constructor(
     private readonly prisma: PrismaService,
@@ -90,7 +92,7 @@ export class PaymentRepo {
       }
 
       const userId = payment.orders[0]?.userId
-      const { orders } = payment
+      const { orders } = payment as any
 
       const totalPrice = this.getTotalPrice(orders)
 

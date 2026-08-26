@@ -4,10 +4,12 @@ import {
   GetProductTranslationDetailResType,
   UpdateProductTranslationBodyType,
 } from 'src/routes/product/product-translation/product-translation.model'
+import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
 import { ProductTranslationType } from 'src/shared/models/shared-product-translation.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
 @Injectable()
+@SerializeAll()
 export class ProductTranslationRepo {
   constructor(private prismaService: PrismaService) {}
 
