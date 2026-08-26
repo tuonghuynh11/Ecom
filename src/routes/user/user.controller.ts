@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
+import { ZodResponse } from 'nestjs-zod'
 import {
   CreateUserBodyDTO,
   CreateUserResDTO,
@@ -16,11 +17,14 @@ import { MessageResDto } from 'src/shared/dtos/response.dto'
 import { GetUserProfileResDto, UpdateProfileResDto } from 'src/shared/dtos/shared-user.dto'
 
 @Controller('users')
+@ApiBearerAuth()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @ZodSerializerDto(GetUsersResDTO)
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
+  @ZodResponse({ type: GetUsersResDTO })
   list(@Query() query: GetUsersQueryDTO) {
     return this.userService.list({
       page: query.page,
@@ -29,13 +33,14 @@ export class UserController {
   }
 
   @Get(':userId')
-  @ZodSerializerDto(GetUserProfileResDto)
+  @ApiParam({ name: 'userId', type: Number })
+  @ZodResponse({ type: GetUserProfileResDto })
   findById(@Param() params: GetUserParamsDTO) {
     return this.userService.findById(params.userId)
   }
 
   @Post()
-  @ZodSerializerDto(CreateUserResDTO)
+  @ZodResponse({ type: CreateUserResDTO })
   create(
     @Body() body: CreateUserBodyDTO,
     @ActiveUser('userId') userId: number,
@@ -49,7 +54,8 @@ export class UserController {
   }
 
   @Put(':userId')
-  @ZodSerializerDto(UpdateProfileResDto)
+  @ApiParam({ name: 'userId', type: Number })
+  @ZodResponse({ type: UpdateProfileResDto })
   update(
     @Body() body: UpdateUserBodyDTO,
     @Param() params: GetUserParamsDTO,
@@ -65,7 +71,8 @@ export class UserController {
   }
 
   @Delete(':userId')
-  @ZodSerializerDto(MessageResDto)
+  @ApiParam({ name: 'userId', type: Number })
+  @ZodResponse({ type: MessageResDto })
   delete(
     @Param() params: GetUserParamsDTO,
     @ActiveUser('userId') userId: number,

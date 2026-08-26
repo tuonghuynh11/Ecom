@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Ip, Post, Query, Res, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ZodResponse } from 'nestjs-zod'
 import {
   DisableTwoFactorBodyDto,
   ForgotPasswordBodyDto,
@@ -36,14 +37,14 @@ export class AuthController {
 
   @Post('register')
   @IsPublic()
-  @ZodSerializerDto(RegisterResDto)
+  @ZodResponse({ type: RegisterResDto })
   register(@Body() body: RegisterBodyDto) {
     return this.authService.register(body)
   }
 
   @Post('otp')
   @IsPublic()
-  @ZodSerializerDto(MessageResDto)
+  @ZodResponse({ type: MessageResDto })
   sendOtp(@Body() body: SendOtpBodyDto) {
     return this.authService.sendOtp(body)
   }
@@ -51,7 +52,7 @@ export class AuthController {
   @Post('login')
   @IsPublic()
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(LoginResDto)
+  @ZodResponse({ type: LoginResDto })
   login(@Body() body: LoginBodyDto, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.login({
       ...body,
@@ -61,10 +62,10 @@ export class AuthController {
   }
 
   @UseGuards(AccessTokenGuard)
+  @ApiBearerAuth()
   @Post('refresh-token')
-  @IsPublic()
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(RefreshTokenResDto)
+  @ZodResponse({ type: RefreshTokenResDto })
   refreshToken(@Body() body: RefreshTokenBodyDto, @UserAgent() userAgent: string, @Ip() ip: string) {
     return this.authService.refreshToken({
       refreshToken: body.refreshToken,
@@ -74,15 +75,16 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ZodSerializerDto(MessageResDto)
+  @ZodResponse({ type: MessageResDto })
   logout(@Body() body: LogoutBodyDto) {
     return this.authService.logout(body)
   }
 
   @Get('google-link')
   @IsPublic()
-  @ZodSerializerDto(GetAuthorizationUrlResDto)
+  @ZodResponse({ type: GetAuthorizationUrlResDto })
   getGoogleLink(@UserAgent() userAgent: string, @Ip() ip: string) {
     return this.googleService.getAuthorizationUrl({
       userAgent,
@@ -92,6 +94,8 @@ export class AuthController {
 
   @Get('google/callback')
   @IsPublic()
+  @ApiQuery({ name: 'code', type: String, required: true })
+  @ApiQuery({ name: 'state', type: String, required: true })
   async googleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     try {
       const tokens = await this.googleService.googleCallback({ code, state })
@@ -108,7 +112,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @IsPublic()
-  @ZodSerializerDto(MessageResDto)
+  @ZodResponse({ type: MessageResDto })
   forgotPassword(@Body() body: ForgotPasswordBodyDto) {
     return this.authService.forgotPassword(body)
   }
@@ -117,13 +121,15 @@ export class AuthController {
   // Vì POST mang ý nghĩa là tạo ra cái gì đó và POST cũng bảo mật hơn GET
   // Vì GET có thể được kích hoạt thông qua URL trên trình duyệt, POST thì không
   @Post('2fa/setup')
-  @ZodSerializerDto(TwoFactorSetupResDto)
+  @ApiBearerAuth()
+  @ZodResponse({ type: TwoFactorSetupResDto })
   setupTwoFactorAuth(@Body() _: EmptyBodyDto, @ActiveUser('userId') userId: number) {
     return this.authService.setupTwoFactorAuth({ userId })
   }
 
   @Post('2fa/disable')
-  @ZodSerializerDto(MessageResDto)
+  @ApiBearerAuth()
+  @ZodResponse({ type: MessageResDto })
   disableTwoFactorAuth(@Body() body: DisableTwoFactorBodyDto, @ActiveUser('userId') userId: number) {
     return this.authService.disableTwoFactorAuth({ ...body, userId })
   }

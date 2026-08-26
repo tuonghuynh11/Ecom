@@ -11,8 +11,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { FilesInterceptor } from '@nestjs/platform-express'
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger'
 import type { Response } from 'express'
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ZodResponse } from 'nestjs-zod'
 import path from 'path'
 import { PresignedUploadFileBodyDTO, PresignedUploadFileResDTO, UploadFilesResDTO } from 'src/routes/media/media.dto'
 import { FileNotFoundException } from 'src/routes/media/media.error'
@@ -25,7 +26,7 @@ import { IsPublic } from 'src/shared/decorators/auth.decorator'
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
   @Post('images/upload')
-  @ZodSerializerDto(UploadFilesResDTO)
+  @ZodResponse({ type: UploadFilesResDTO })
   @UseInterceptors(
     FilesInterceptor('files', 3, {
       limits: {
@@ -51,6 +52,8 @@ export class MediaController {
   }
 
   @Get('static/:filename')
+  @ApiBearerAuth()
+  @ApiParam({ name: 'filename', type: String })
   serveFile(@Param('filename') file: string, @Res() res: Response) {
     return res.sendFile(path.resolve(`${UPLOAD_DIR}/${file}`), (err: Error) => {
       if (err) {
@@ -59,8 +62,9 @@ export class MediaController {
     })
   }
 
-  @ZodSerializerDto(PresignedUploadFileResDTO)
+  @ZodResponse({ type: PresignedUploadFileResDTO })
   @Post('images/upload/presigned-url')
+  @ApiBearerAuth()
   async createPresignedUrl(@Body() body: PresignedUploadFileBodyDTO) {
     return this.mediaService.getPresignedUrl(body)
   }

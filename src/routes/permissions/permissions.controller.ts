@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
+import { ZodResponse } from 'nestjs-zod'
 import {
   CreatePermissionBodyDTO,
   GetPermissionDetailResDTO,
@@ -9,27 +10,31 @@ import {
   UpdatePermissionBodyDTO,
 } from 'src/routes/permissions/permissions.dto'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
-import { MessageResSchema } from 'src/shared/models/response.model'
+import { MessageResDto } from 'src/shared/dtos/response.dto'
 import { PermissionsService } from './permissions.service'
 
 @Controller('permissions')
+@ApiBearerAuth()
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Get()
-  @ZodSerializerDto(GetPermissionsResDTO)
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
+  @ZodResponse({ type: GetPermissionsResDTO })
   find(@Query() query: GetPermissionsQueriesDTO) {
     return this.permissionsService.find(query)
   }
 
   @Get(':id')
-  @ZodSerializerDto(GetPermissionDetailResDTO)
+  @ApiParam({ name: 'id', type: Number })
+  @ZodResponse({ type: GetPermissionDetailResDTO })
   findOne(@Param() params: GetPermissionsParamsDTO) {
     return this.permissionsService.findOne(params.id)
   }
 
   @Post()
-  @ZodSerializerDto(GetPermissionDetailResDTO)
+  @ZodResponse({ type: GetPermissionDetailResDTO })
   create(@Body() body: CreatePermissionBodyDTO, @ActiveUser('userId') userId: number) {
     return this.permissionsService.create({
       payload: body,
@@ -38,7 +43,8 @@ export class PermissionsController {
   }
 
   @Put(':id')
-  @ZodSerializerDto(GetPermissionDetailResDTO)
+  @ApiParam({ name: 'id', type: Number })
+  @ZodResponse({ type: GetPermissionDetailResDTO })
   update(
     @Param() params: GetPermissionsParamsDTO,
     @Body() body: UpdatePermissionBodyDTO,
@@ -52,7 +58,8 @@ export class PermissionsController {
   }
 
   @Delete(':id')
-  @ZodSerializerDto(MessageResSchema)
+  @ApiParam({ name: 'id', type: Number })
+  @ZodResponse({ type: MessageResDto })
   remove(@Param() params: GetPermissionsParamsDTO, @ActiveUser('userId') userId: number) {
     return this.permissionsService.remove({
       id: params.id,

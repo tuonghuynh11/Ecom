@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
 import { ZodResponse } from 'nestjs-zod'
 import { ManageProductService } from 'src/routes/product/manage-product.service'
 import {
@@ -13,12 +14,25 @@ import {
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { MessageResDto } from 'src/shared/dtos/response.dto'
 import type { AccessTokenPayload } from 'src/shared/types/jwt.type'
+import { OrderBy, SortBy } from 'src/shared/constants/other.constant'
 
 @Controller('manage-product/products')
+@ApiBearerAuth()
 export class ManageProductController {
   constructor(private readonly manageProductService: ManageProductService) {}
 
   @Get()
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
+  @ApiQuery({ name: 'name', type: String, required: false })
+  @ApiQuery({ name: 'brandIds', type: Number, required: false, isArray: true })
+  @ApiQuery({ name: 'categories', type: Number, required: false, isArray: true })
+  @ApiQuery({ name: 'minPrice', type: Number, required: false })
+  @ApiQuery({ name: 'maxPrice', type: Number, required: false })
+  @ApiQuery({ name: 'createdById', type: Number, required: true })
+  @ApiQuery({ name: 'orderBy', enum: OrderBy, required: false, example: OrderBy.Desc })
+  @ApiQuery({ name: 'sortBy', enum: SortBy, required: false, example: SortBy.CreatedAt })
+  @ApiQuery({ name: 'isPublic', type: Boolean, required: false })
   @ZodResponse({ type: GetProductsResDTO })
   list(@Query() query: GetManageProductsQueryDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.list({
@@ -29,6 +43,7 @@ export class ManageProductController {
   }
 
   @Get(':productId')
+  @ApiParam({ name: 'productId', type: Number })
   @ZodResponse({ type: GetProductDetailResDTO })
   findById(@Param() params: GetProductParamsDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.getDetail({
@@ -48,6 +63,7 @@ export class ManageProductController {
   }
 
   @Put(':productId')
+  @ApiParam({ name: 'productId', type: Number })
   @ZodResponse({ type: ProductDTO })
   update(
     @Body() body: UpdateProductBodyDTO,
@@ -63,6 +79,7 @@ export class ManageProductController {
   }
 
   @Delete(':productId')
+  @ApiParam({ name: 'productId', type: Number })
   @ZodResponse({ type: MessageResDto })
   delete(@Param() params: GetProductParamsDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.manageProductService.delete({

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { unlink } from 'fs/promises'
-import { PresignedUploadFileBodyType } from 'src/routes/media/media.model'
+import { PresignedUploadFileBodyType, UploadFilesResType } from 'src/routes/media/media.model'
 import { generateRandomFilename } from 'src/shared/helpers'
 import { S3Service } from 'src/shared/services/s3.service'
 
@@ -8,7 +8,7 @@ import { S3Service } from 'src/shared/services/s3.service'
 export class MediaService {
   constructor(private readonly s3Service: S3Service) {}
 
-  async uploadFile(files: Array<Express.Multer.File>) {
+  async uploadFile(files: Array<Express.Multer.File>): Promise<UploadFilesResType> {
     try {
       const results = await Promise.all(
         files.map(async (file) => {
@@ -30,7 +30,7 @@ export class MediaService {
       )
 
       return {
-        data: results,
+        data: results as any,
       }
     } finally {
       await Promise.all(

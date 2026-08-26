@@ -225,7 +225,7 @@ export class OrderRepo {
     }
   }
 
-  async detail(userId: number, orderId: number): Promise<GetOrderDetailResType | null> {
+  async detail(userId: number, orderId: number): Promise<GetOrderDetailResType> {
     const order = await this.prisma.order.findUnique({
       where: {
         userId,

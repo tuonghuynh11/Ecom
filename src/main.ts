@@ -11,20 +11,30 @@ async function bootstrap() {
 
   const websocketAdapter = new WebsocketAdapter(app)
   await websocketAdapter.connectToRedis()
+  app.setGlobalPrefix('api')
 
   const config = new DocumentBuilder()
     .setTitle('E-commerce API')
-    .setDescription('The API for the E-commerce application')
+    .setDescription(`The API for the E-commerce application`)
     .setVersion('1.0')
+    .addBearerAuth()
+    .addApiKey(
+      {
+        name: 'authorization',
+        type: 'apiKey',
+        in: 'header',
+      },
+      'payment-api-key',
+    )
     .build()
   const documentFactory = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api-docs', app, cleanupOpenApiDoc(documentFactory), {
+    jsonDocumentUrl: '/api-docs/openapi.json',
     swaggerOptions: {
       persistAuthorization: true,
     },
   })
 
-  app.setGlobalPrefix('api')
   app.enableCors({
     origin: '*',
   })

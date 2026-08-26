@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
+import { ZodResponse } from 'nestjs-zod'
 import {
   CreateBrandBodyDTO,
   GetBrandDetailResDTO,
@@ -19,20 +20,24 @@ export class BrandController {
 
   @Get()
   @IsPublic()
-  @ZodSerializerDto(GetBrandsResDTO)
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
+  @ZodResponse({ type: GetBrandsResDTO })
   list(@Query() query: PaginationQueryDTO) {
     return this.brandService.list(query)
   }
 
   @Get(':brandId')
   @IsPublic()
-  @ZodSerializerDto(GetBrandDetailResDTO)
+  @ApiParam({ name: 'brandId', type: Number })
+  @ZodResponse({ type: GetBrandDetailResDTO })
   findById(@Param() params: GetBrandParamsDTO) {
     return this.brandService.findById(params.brandId)
   }
 
   @Post()
-  @ZodSerializerDto(GetBrandDetailResDTO)
+  @ApiBearerAuth()
+  @ZodResponse({ type: GetBrandDetailResDTO })
   create(@Body() body: CreateBrandBodyDTO, @ActiveUser('userId') userId: number) {
     return this.brandService.create({
       data: body,
@@ -41,7 +46,9 @@ export class BrandController {
   }
 
   @Put(':brandId')
-  @ZodSerializerDto(GetBrandDetailResDTO)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'brandId', type: Number })
+  @ZodResponse({ type: GetBrandDetailResDTO })
   update(@Body() body: UpdateBrandBodyDTO, @Param() params: GetBrandParamsDTO, @ActiveUser('userId') userId: number) {
     return this.brandService.update({
       data: body,
@@ -51,7 +58,9 @@ export class BrandController {
   }
 
   @Delete(':brandId')
-  @ZodSerializerDto(MessageResDto)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'brandId', type: Number })
+  @ZodResponse({ type: MessageResDto })
   delete(@Param() params: GetBrandParamsDTO, @ActiveUser('userId') userId: number) {
     return this.brandService.delete({
       id: params.brandId,

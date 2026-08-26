@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
+import { ZodResponse } from 'nestjs-zod'
 import {
   CancelOrderBodyDTO,
   CancelOrderResDTO,
@@ -12,31 +13,38 @@ import {
 } from 'src/routes/order/order.dto'
 import { OrderService } from 'src/routes/order/order.service'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+import { OrderStatus } from 'src/shared/constants/order.constant'
 
 @Controller('orders')
+@ApiBearerAuth()
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get()
-  @ZodSerializerDto(GetOrderListResDTO)
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
+  @ApiQuery({ name: 'status', enum: OrderStatus, required: false })
+  @ZodResponse({ type: GetOrderListResDTO })
   getCart(@ActiveUser('userId') userId: number, @Query() query: GetOrderListQueryDTO) {
     return this.orderService.list(userId, query)
   }
 
   @Post()
-  @ZodSerializerDto(CreateOrderResDTO)
+  @ZodResponse({ type: CreateOrderResDTO })
   createOrder(@ActiveUser('userId') userId: number, @Body() body: CreateOrderBodyDTO) {
     return this.orderService.create(userId, body)
   }
 
   @Get(':orderId')
-  @ZodSerializerDto(GetOrderDetailResDTO)
+  @ApiParam({ name: 'orderId', type: Number })
+  @ZodResponse({ type: GetOrderDetailResDTO })
   getOrderDetail(@Param() params: GetOrderParamsDTO, @ActiveUser('userId') userId: number) {
     return this.orderService.detail(userId, params.orderId)
   }
 
   @Put(':orderId')
-  @ZodSerializerDto(CancelOrderResDTO)
+  @ApiParam({ name: 'orderId', type: Number })
+  @ZodResponse({ type: CancelOrderResDTO })
   cancelOrder(@Param() params: GetOrderParamsDTO, @Body() _: CancelOrderBodyDTO, @ActiveUser('userId') userId: number) {
     return this.orderService.cancel(userId, params.orderId)
   }

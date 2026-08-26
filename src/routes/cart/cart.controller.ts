@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
 import { ZodResponse } from 'nestjs-zod'
 import {
   AddToCartBodyDTO,
@@ -14,10 +15,13 @@ import { MessageResDto } from 'src/shared/dtos/response.dto'
 import { CartService } from './cart.service'
 
 @Controller('cart')
+@ApiBearerAuth()
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 10 })
   @ZodResponse({
     type: GetCartResDTO,
   })
@@ -36,6 +40,7 @@ export class CartController {
   }
 
   @Put(':cartItemId')
+  @ApiParam({ name: 'cartItemId', type: Number })
   @ZodResponse({
     type: CartItemDTO,
   })

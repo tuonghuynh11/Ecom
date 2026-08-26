@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PermissionFindManyArgs, PermissionWhereInput } from 'src/generated/prisma/models'
 import {
   CreatePermissionBodyType,
+  GetPermissionDetailResType,
   GetPermissionsQueriesType,
   GetPermissionsResType,
   UpdatePermissionBodyType,
@@ -36,29 +37,43 @@ export class PermissionsRepository {
     }
   }
 
-  findOne(id: number) {
+  findOne(id: number): Promise<GetPermissionDetailResType | null> {
     return this.prisma.permission.findUnique({
       where: { id, deletedAt: null },
-    })
+    }) as any
   }
 
-  create({ payload, createdById }: { payload: CreatePermissionBodyType; createdById: number }) {
+  create({
+    payload,
+    createdById,
+  }: {
+    payload: CreatePermissionBodyType
+    createdById: number
+  }): Promise<GetPermissionDetailResType> {
     return this.prisma.permission.create({
       data: {
         ...payload,
         createdById,
       },
-    })
+    }) as any
   }
 
-  update({ id, payload, updatedById }: { id: number; payload: UpdatePermissionBodyType; updatedById: number }) {
+  update({
+    id,
+    payload,
+    updatedById,
+  }: {
+    id: number
+    payload: UpdatePermissionBodyType
+    updatedById: number
+  }): Promise<GetPermissionDetailResType> {
     return this.prisma.permission.update({
       where: { id, deletedAt: null },
       data: {
         ...payload,
         updatedById,
       },
-    })
+    }) as any
   }
 
   delete({ id, deletedById, isHard }: { id: number; deletedById: number; isHard?: boolean }) {

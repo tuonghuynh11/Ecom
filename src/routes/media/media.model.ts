@@ -21,3 +21,4 @@ export const PresignedUploadFileResSchema = z.object({
 })
 
 export type PresignedUploadFileBodyType = z.infer<typeof PresignedUploadFileBodySchema>
+export type UploadFilesResType = z.infer<typeof UploadFilesResSchema>

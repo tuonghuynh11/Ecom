@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InvalidPasswordException, NotFoundRecordException } from 'src/shared/error'
 import { isUniqueConstraintPrismaError } from 'src/shared/helpers'
+import { UpdateProfileResType } from 'src/shared/models/shared-user.model'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { ChangePasswordBodyType, UpdateMeBodyType } from './profile.model'
@@ -26,13 +27,13 @@ export class ProfileService {
 
   async updateProfile({ userId, body }: { userId: number; body: UpdateMeBodyType }) {
     try {
-      return await this.sharedUserRepository.update(
+      return (await this.sharedUserRepository.update(
         { id: userId },
         {
           ...body,
           updatedById: userId,
         },
-      )
+      )) as UpdateProfileResType
     } catch (error) {
       if (isUniqueConstraintPrismaError(error)) {
         throw NotFoundRecordException

@@ -6,6 +6,7 @@ import {
   UpdatePermissionBodyType,
 } from 'src/routes/permissions/permissions.model'
 import { PermissionsRepository } from 'src/routes/permissions/permissions.repo'
+import { MessageResDto } from 'src/shared/dtos/response.dto'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 
@@ -54,7 +55,7 @@ export class PermissionsService {
     }
   }
 
-  async remove({ id, deletedById }: { id: number; deletedById: number }) {
+  async remove({ id, deletedById }: { id: number; deletedById: number }): Promise<MessageResDto> {
     try {
       await this.permissionsRepository.delete({ id, deletedById })
       return {

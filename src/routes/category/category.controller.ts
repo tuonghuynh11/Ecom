@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { ZodSerializerDto } from 'nestjs-zod'
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
+import { ZodResponse } from 'nestjs-zod'
 import {
   CreateCategoryBodyDTO,
   GetAllCategoriesIncludeNestedResDTO,
@@ -20,26 +21,29 @@ export class CategoryController {
 
   @Get()
   @IsPublic()
-  @ZodSerializerDto(GetAllCategoriesResDTO)
+  @ApiQuery({ name: 'parentCategoryId', type: Number, required: false })
+  @ZodResponse({ type: GetAllCategoriesResDTO })
   findAll(@Query() query: GetAllCategoriesQueryDTO) {
     return this.categoryService.findAll(query.parentCategoryId)
   }
   @Get('nested')
   @IsPublic()
-  @ZodSerializerDto(GetAllCategoriesIncludeNestedResDTO)
+  @ZodResponse({ type: GetAllCategoriesIncludeNestedResDTO })
   findAllIncludeNested() {
     return this.categoryService.findAllIncludeNested()
   }
 
   @Get(':categoryId')
   @IsPublic()
-  @ZodSerializerDto(GetCategoryDetailResDTO)
+  @ApiParam({ name: 'categoryId', type: Number })
+  @ZodResponse({ type: GetCategoryDetailResDTO })
   findById(@Param() params: GetCategoryParamsDTO) {
     return this.categoryService.findById(params.categoryId)
   }
 
   @Post()
-  @ZodSerializerDto(GetCategoryDetailResDTO)
+  @ApiBearerAuth()
+  @ZodResponse({ type: GetCategoryDetailResDTO })
   create(@Body() body: CreateCategoryBodyDTO, @ActiveUser('userId') userId: number) {
     return this.categoryService.create({
       data: body,
@@ -48,7 +52,9 @@ export class CategoryController {
   }
 
   @Put(':categoryId')
-  @ZodSerializerDto(GetCategoryDetailResDTO)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'categoryId', type: Number })
+  @ZodResponse({ type: GetCategoryDetailResDTO })
   update(
     @Body() body: UpdateCategoryBodyDTO,
     @Param() params: GetCategoryParamsDTO,
@@ -62,7 +68,9 @@ export class CategoryController {
   }
 
   @Delete(':categoryId')
-  @ZodSerializerDto(MessageResDto)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'categoryId', type: Number })
+  @ZodResponse({ type: MessageResDto })
   delete(@Param() params: GetCategoryParamsDTO, @ActiveUser('userId') userId: number) {
     return this.categoryService.delete({
       id: params.categoryId,

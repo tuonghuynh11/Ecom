@@ -13,6 +13,7 @@ import {
   isNotFoundPrismaError,
   isUniqueConstraintPrismaError,
 } from 'src/shared/helpers'
+import { UpdateProfileResType } from 'src/shared/models/shared-user.model'
 import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { HashingService } from 'src/shared/services/hashing.service'
@@ -130,7 +131,7 @@ export class UserService {
           updatedById,
         },
       )
-      return updatedUser
+      return updatedUser as UpdateProfileResType
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw NotFoundRecordException
