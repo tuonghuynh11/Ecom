@@ -1,11 +1,13 @@
 import { BullModule } from '@nestjs/bullmq'
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerModule } from '@nestjs/throttler'
 import ms from 'ms'
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import * as path from 'path'
+import { RemoveRefreshTokenCronjob } from 'src/cronjobs/remove-refresh-token.cronjob'
 import { PaymentConsumer } from 'src/queues/payment.consumer'
 import { BrandTranslationModule } from 'src/routes/brand/brand-translation/brand-translation.module'
 import { BrandModule } from 'src/routes/brand/brand.module'
@@ -39,6 +41,7 @@ import { SharedModule } from './shared/shared.module'
         url: envConfig.REDIS_URL,
       },
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -109,6 +112,7 @@ import { SharedModule } from './shared/shared.module'
       useClass: ThrottlerBehindProxyGuard,
     },
     PaymentConsumer,
+    RemoveRefreshTokenCronjob,
   ],
 })
 export class AppModule {}
