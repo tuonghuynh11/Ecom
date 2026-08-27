@@ -1,4 +1,5 @@
 import { BullModule } from '@nestjs/bullmq'
+import { CacheModule } from '@nestjs/cache-manager'
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ScheduleModule } from '@nestjs/schedule'
@@ -36,6 +37,9 @@ import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
 @Module({
   imports: [
+    CacheModule.register({
+      isGlobal: true,
+    }),
     BullModule.forRoot({
       connection: {
         url: envConfig.REDIS_URL,

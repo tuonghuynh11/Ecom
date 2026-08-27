@@ -1,13 +1,32 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common'
+import type { Cache } from 'cache-manager'
+import { keyBy } from 'lodash'
+import { RolePermissionsType } from 'src/shared/models/share-role.model'
 import { PrismaService } from 'src/shared/services/prisma.service'
 import { AccessTokenPayload } from 'src/shared/types/jwt.type'
 import { REQUEST_ROLE_PERMISSIONS, REQUEST_USER_KEY } from '../constants/auth.constant'
 import { TokenService } from '../services/token.service'
+
+type Permission = RolePermissionsType['permissions'][number]
+type CachedRole = RolePermissionsType & {
+  permissions: {
+    [key: string]: Permission
+  }
+}
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
   constructor(
     private readonly tokenService: TokenService,
     private readonly prismaService: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>()
@@ -44,31 +63,42 @@ export class AccessTokenGuard implements CanActivate {
     const path = request.route.path
     const method = request.method
 
-    // Check if the user has permission for the current route
-    const role = await this.prismaService.role
-      .findUniqueOrThrow({
-        where: {
-          id: roleId,
-          deletedAt: null,
-          isActive: true,
-        },
-        include: {
-          permissions: {
-            where: {
-              deletedAt: null,
-              path,
-              method,
+    const cacheKey = `role:${roleId}`
+
+    //1. Check if the role permissions are cached
+    let cachedRole = await this.cacheManager.get<CachedRole>(cacheKey)
+    console.log('CachedRole:', cachedRole)
+    if (cachedRole === undefined) {
+      // 2. If not cached, fetch the role and permissions from the database
+      const role = (await this.prismaService.role
+        .findUniqueOrThrow({
+          where: {
+            id: roleId,
+            deletedAt: null,
+            isActive: true,
+          },
+          include: {
+            permissions: {
+              where: {
+                deletedAt: null,
+              },
             },
           },
-        },
-      })
-      .catch(() => {
-        throw new ForbiddenException('Error.Forbidden')
-      })
-    const canAccess = role.permissions.length > 0
-    if (!canAccess) {
-      throw new ForbiddenException('Error.Forbidden')
+        })
+        .catch(() => {
+          throw new ForbiddenException('Error.Forbidden')
+        })) as any
+      const permissionObject = keyBy(role.permissions, (permission) => `${permission.path}:${permission.method}`)
+      cachedRole = { ...role, permissions: permissionObject as any }
+      await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
+
+      request[REQUEST_ROLE_PERMISSIONS] = role
     }
-    request[REQUEST_ROLE_PERMISSIONS] = role
+
+    // 3. Kiểm tra quyền truy cập
+    const canAccess: Permission | undefined = cachedRole!.permissions[`${path}:${method}`]
+    if (!canAccess) {
+      throw new ForbiddenException()
+    }
   }
 }
