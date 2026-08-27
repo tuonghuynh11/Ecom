@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable } from '@nestjs/common'
+import type { Cache } from 'cache-manager'
 import { PermissionAlreadyExistsException } from 'src/routes/permissions/permissions.error'
 import {
   CreatePermissionBodyType,
@@ -12,7 +14,10 @@ import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared
 
 @Injectable()
 export class PermissionsService {
-  constructor(private readonly permissionsRepository: PermissionsRepository) {}
+  constructor(
+    private readonly permissionsRepository: PermissionsRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
   async find(query: GetPermissionsQueriesType) {
     const { page, limit } = query
 
@@ -43,7 +48,10 @@ export class PermissionsService {
 
   async update({ id, payload, updatedById }: { id: number; payload: UpdatePermissionBodyType; updatedById: number }) {
     try {
-      return await this.permissionsRepository.update({ id, payload, updatedById })
+      const permission = await this.permissionsRepository.update({ id, payload, updatedById })
+      const { roles } = permission
+      await this.deleteCachedRole(roles)
+      return permission
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw NotFoundRecordException
@@ -57,7 +65,9 @@ export class PermissionsService {
 
   async remove({ id, deletedById }: { id: number; deletedById: number }): Promise<MessageResDto> {
     try {
-      await this.permissionsRepository.delete({ id, deletedById })
+      const permissions = await this.permissionsRepository.delete({ id, deletedById })
+      const { roles } = permissions
+      await this.deleteCachedRole(roles)
       return {
         message: 'Success.DeletePermission',
       }
@@ -67,5 +77,9 @@ export class PermissionsService {
       }
       throw error
     }
+  }
+
+  deleteCachedRole(roles: { id: number }[]) {
+    return Promise.all(roles.map((role) => this.cacheManager.del(`role:${role.id}`)))
   }
 }

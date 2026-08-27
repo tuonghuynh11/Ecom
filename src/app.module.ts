@@ -1,3 +1,4 @@
+import KeyvRedis from '@keyv/redis'
 import { BullModule } from '@nestjs/bullmq'
 import { CacheModule } from '@nestjs/cache-manager'
 import { Module } from '@nestjs/common'
@@ -37,8 +38,13 @@ import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
 @Module({
   imports: [
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
+      useFactory: () => {
+        return {
+          stores: [new KeyvRedis(envConfig.REDIS_URL)],
+        }
+      },
     }),
     BullModule.forRoot({
       connection: {

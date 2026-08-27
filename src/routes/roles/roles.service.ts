@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable } from '@nestjs/common'
+import type { Cache } from 'cache-manager'
 import { ProhibitedActionOnBaseRoleException, RoleAlreadyExistsException } from 'src/routes/roles/roles.error'
 import { CreateRoleBodyType, GetRolesQueriesType, UpdateRoleBodyType } from 'src/routes/roles/roles.model'
 import { RolesRepository } from 'src/routes/roles/roles.repo'
@@ -9,7 +11,10 @@ import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly RolesRepository: RolesRepository) {}
+  constructor(
+    private readonly RolesRepository: RolesRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
   async find(query: GetRolesQueriesType) {
     return this.RolesRepository.find(query)
   }
@@ -40,7 +45,7 @@ export class RolesService {
     try {
       // Don't allow updating Admin role
       await this.verifyRole(id)
-
+      await this.cacheManager.del(`role:${id}`)
       return await this.RolesRepository.update({ id, payload, updatedById })
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
@@ -64,6 +69,8 @@ export class RolesService {
       }
 
       await this.RolesRepository.delete({ id, deletedById })
+      await this.cacheManager.del(`role:${id}`)
+
       return {
         message: 'Success.DeleteRole',
       }

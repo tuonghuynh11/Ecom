@@ -87,16 +87,19 @@ export class AccessTokenGuard implements CanActivate {
         })
         .catch(() => {
           throw new ForbiddenException('Error.Forbidden')
-        })) as any
-      const permissionObject = keyBy(role.permissions, (permission) => `${permission.path}:${permission.method}`)
-      cachedRole = { ...role, permissions: permissionObject as any }
+        })) as unknown as RolePermissionsType
+      const permissionObject = keyBy(
+        role.permissions,
+        (permission) => `${permission.path}:${permission.method}`,
+      ) as CachedRole['permissions']
+      cachedRole = { ...role, permissions: permissionObject }
       await this.cacheManager.set(cacheKey, cachedRole, 1000 * 60 * 60) // Cache for 1 hour
 
       request[REQUEST_ROLE_PERMISSIONS] = role
     }
 
     // 3. Kiểm tra quyền truy cập
-    const canAccess: Permission | undefined = cachedRole!.permissions[`${path}:${method}`]
+    const canAccess: Permission | undefined = cachedRole.permissions[`${path}:${method}`]
     if (!canAccess) {
       throw new ForbiddenException()
     }
