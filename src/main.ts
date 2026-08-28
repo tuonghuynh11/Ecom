@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import helmet from 'helmet'
 import { cleanupOpenApiDoc } from 'nestjs-zod'
 import envConfig from 'src/shared/config'
+import { LoggingInterceptor } from 'src/shared/interceptor/logging.interceptor'
 import { WebsocketAdapter } from 'src/websockets/websocket.adapter'
 import { AppModule } from './app.module'
-
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
@@ -40,8 +41,9 @@ async function bootstrap() {
   })
 
   app.set('trust proxy', 'loopback') // Trust requests from the loopback address
-
+  app.use(helmet())
   app.useWebSocketAdapter(websocketAdapter)
+  app.useGlobalInterceptors(new LoggingInterceptor())
 
   await app.listen(envConfig.PORT ?? 3000)
 }
