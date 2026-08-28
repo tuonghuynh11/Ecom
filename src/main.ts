@@ -2,18 +2,20 @@ import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
+import { Logger } from 'nestjs-pino'
 import { cleanupOpenApiDoc } from 'nestjs-zod'
 import envConfig from 'src/shared/config'
-import { LoggingInterceptor } from 'src/shared/interceptor/logging.interceptor'
 import { WebsocketAdapter } from 'src/websockets/websocket.adapter'
 import { AppModule } from './app.module'
+
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true })
 
   const websocketAdapter = new WebsocketAdapter(app)
   await websocketAdapter.connectToRedis()
   app.setGlobalPrefix('api')
 
+  // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('E-commerce API')
     .setDescription(`The API for the E-commerce application`)
@@ -36,14 +38,21 @@ async function bootstrap() {
     },
   })
 
+  // Enable CORS for all origins
   app.enableCors({
     origin: '*',
   })
 
+  // Trust proxy settings for Heroku
   app.set('trust proxy', 'loopback') // Trust requests from the loopback address
   app.use(helmet())
   app.useWebSocketAdapter(websocketAdapter)
-  app.useGlobalInterceptors(new LoggingInterceptor())
+
+  // Use the LoggingInterceptor globally
+  // app.useGlobalInterceptors(new LoggingInterceptor())
+
+  // Use the Logger from nestjs-pino globally
+  app.useLogger(app.get(Logger))
 
   await app.listen(envConfig.PORT ?? 3000)
 }

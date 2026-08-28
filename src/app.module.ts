@@ -5,8 +5,10 @@ import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerModule } from '@nestjs/throttler'
+import { randomUUID } from 'crypto'
 import ms from 'ms'
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
+import { LoggerModule } from 'nestjs-pino'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import * as path from 'path'
 import { RemoveRefreshTokenCronjob } from 'src/cronjobs/remove-refresh-token.cronjob'
@@ -36,8 +38,131 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
+
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+
+        genReqId: (req, res) => {
+          const requestId = req.headers['x-request-id']?.toString() ?? randomUUID()
+
+          res.setHeader('x-request-id', requestId)
+
+          return requestId
+        },
+
+        serializers: {
+          req: (req) => ({
+            id: req.id,
+            method: req.method,
+            url: req.url,
+
+            // chỉ hiện khi có giá trị thực sự cần thiết
+            params: req.params && Object.keys(req.params).length > 0 ? req.params : undefined,
+
+            query: req.query && Object.keys(req.query).length > 0 ? req.query : undefined,
+          }),
+
+          res: (res) => ({
+            statusCode: res.statusCode,
+          }),
+
+          err: (err) => ({
+            type: err.type,
+            message: err.message,
+            stack: err.stack,
+          }),
+        },
+
+        customLogLevel: (_req, res, err) => {
+          if (err || res.statusCode >= 500) {
+            return 'error'
+          }
+
+          if (res.statusCode >= 400) {
+            return 'warn'
+          }
+
+          return 'info'
+        },
+
+        customSuccessMessage: (req, res) => {
+          return `${req.method} ${req.url} ${res.statusCode}`
+        },
+
+        customErrorMessage: (req, res, err) => {
+          return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`
+        },
+
+        redact: {
+          paths: [
+            'req.headers.authorization',
+            'req.headers.cookie',
+
+            'req.body.password',
+            'req.body.passwordConfirm',
+
+            'req.body.accessToken',
+            'req.body.refreshToken',
+
+            'req.body.token',
+            'req.body.otp',
+
+            'res.headers["set-cookie"]',
+          ],
+
+          censor: '[REDACTED]',
+        },
+
+        transport: {
+          targets:
+            process.env.NODE_ENV !== 'production'
+              ? [
+                  // Terminal
+                  {
+                    target: 'pino-pretty',
+                    level: 'debug',
+
+                    options: {
+                      colorize: true,
+                      translateTime: 'SYS:standard',
+
+                      singleLine: false,
+
+                      ignore: 'pid,hostname',
+
+                      messageFormat: '{msg}',
+                    },
+                  },
+
+                  // File
+                  {
+                    target: 'pino/file',
+                    level: 'info',
+
+                    options: {
+                      destination: path.resolve('logs/app.log'),
+                      mkdir: true,
+                    },
+                  },
+                ]
+              : [
+                  // File
+                  {
+                    target: 'pino/file',
+                    level: 'info',
+
+                    options: {
+                      destination: path.resolve('logs/app.log'),
+                      mkdir: true,
+                    },
+                  },
+                ],
+        },
+      },
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: () => {
