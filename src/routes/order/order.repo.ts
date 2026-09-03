@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Injectable } from '@nestjs/common'
+import { Prisma } from 'src/generated/prisma/client'
 import { OrderWhereInput } from 'src/generated/prisma/models'
 import {
   CannotCancelOrderException,
@@ -75,83 +76,104 @@ export class OrderRepo {
     paymentQR: string
     orders: CreateOrderResType['data']
   }> {
-    //1, Kiểm tra xem các cartItemIds có tồn tại trong CSDL hay không
-
-    const allBodyCartItemIds = body.flatMap((item) => item.cartItemIds)
-    const cartItems = await this.prisma.cartItem.findMany({
-      where: {
-        userId,
-        id: {
-          in: allBodyCartItemIds,
+    // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
+    // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
+    // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
+    // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
+    // 5. Tạo order
+    // 6. Xóa cartItem
+    const [payment, orders, paymentQR] = await this.prisma.$transaction(async (tx) => {
+      const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat()
+      const cartItemsForSKUId = await tx.cartItem.findMany({
+        where: {
+          id: {
+            in: allBodyCartItemIds,
+          },
+          userId,
         },
-      },
-      include: {
-        sku: {
-          include: {
-            product: {
-              include: {
-                productTranslations: true,
+        select: {
+          skuId: true,
+        },
+      })
+      const skuIds = cartItemsForSKUId.map((cartItem) => cartItem.skuId)
+      await tx.$queryRaw`SELECT * FROM "SKU" WHERE id IN (${Prisma.join(skuIds)}) FOR UPDATE`
+      const cartItems = await tx.cartItem.findMany({
+        where: {
+          id: {
+            in: allBodyCartItemIds,
+          },
+          userId,
+        },
+        include: {
+          sku: {
+            include: {
+              product: {
+                include: {
+                  productTranslations: true,
+                },
               },
             },
           },
         },
-      },
-    })
-
-    if (cartItems.length !== allBodyCartItemIds.length) {
-      throw NotFoundCartItemException
-    }
-
-    //2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
-    const isOutOfStock = cartItems.some((item) => item.sku.stock < item.quantity)
-
-    if (isOutOfStock) {
-      throw OutOfStockSKUException
-    }
-
-    //3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
-
-    const isProductNotFound = cartItems.some(
-      (item) =>
-        item.sku.product.deletedAt !== null ||
-        item.sku.product.publishedAt === null ||
-        item.sku.product.publishedAt > new Date(),
-    )
-    if (isProductNotFound) {
-      throw ProductNotFoundException
-    }
-
-    //4. Kiểm tra xem các skuId trong cartItems có thuộc về shopId trong body hay không
-    const cartItemMap = new Map<number, (typeof cartItems)[0]>()
-    cartItems.forEach((item) => {
-      cartItemMap.set(item.id, item)
-    })
-    const isValidShop = body.every((item) => {
-      const bodyCartItemIds = item.cartItemIds
-      return bodyCartItemIds.every((cartItemId) => {
-        const cartItem = cartItemMap.get(cartItemId)
-        return item.shopId === cartItem?.sku.createdById
       })
-    })
 
-    if (!isValidShop) {
-      throw SKUNotBelongToShopException
-    }
+      // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
+      if (cartItems.length !== allBodyCartItemIds.length) {
+        throw NotFoundCartItemException
+      }
 
-    //5. Tạo Order và xóa cartItems trong transaction để đảm bảo tính toàn vẹn dữ liệu
-    const [payment, orders, paymentQR] = await this.prisma.$transaction(async (tx) => {
+      // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
+      const isOutOfStock = cartItems.some((item) => {
+        return item.sku.stock < item.quantity
+      })
+      if (isOutOfStock) {
+        throw OutOfStockSKUException
+      }
+
+      // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
+      const isExistNotReadyProduct = cartItems.some(
+        (item) =>
+          item.sku.product.deletedAt !== null ||
+          item.sku.product.publishedAt === null ||
+          item.sku.product.publishedAt > new Date(),
+      )
+      if (isExistNotReadyProduct) {
+        throw ProductNotFoundException
+      }
+
+      // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
+      const cartItemMap = new Map<number, (typeof cartItems)[0]>()
+      cartItems.forEach((item) => {
+        cartItemMap.set(item.id, item)
+      })
+      const isValidShop = body.every((item) => {
+        const bodyCartItemIds = item.cartItemIds
+        return bodyCartItemIds.every((cartItemId) => {
+          // Neu đã đến bước này thì cartItem luôn luôn có giá trị
+          // Vì chúng ta đã so sánh với allBodyCartItems.length ở trên rồi
+          const cartItem = cartItemMap.get(cartItemId)!
+          return item.shopId === cartItem.sku.createdById
+        })
+      })
+      if (!isValidShop) {
+        throw SKUNotBelongToShopException
+      }
+
+      // 5. Tạo order và xóa cartItem trong transaction để đảm bảo tính toàn vẹn dữ liệu
+
       const payment = await tx.payment.create({
         data: {
           status: PaymentStatus.PENDING,
         },
       })
       const orders$ = Promise.all(
-        body.map((item) => {
-          return tx.order.create({
+        body.map((item) =>
+          tx.order.create({
             data: {
               userId,
               status: OrderStatus.PENDING_PAYMENT,
               receiver: item.receiver,
+              createdById: userId,
               shopId: item.shopId,
               paymentId: payment.id,
               items: {
@@ -161,16 +183,18 @@ export class OrderRepo {
                     productName: cartItem.sku.product.name,
                     skuPrice: cartItem.sku.price,
                     image: cartItem.sku.image,
+                    skuId: cartItem.sku.id,
                     skuValue: cartItem.sku.value,
-                    skuId: cartItem.skuId,
                     quantity: cartItem.quantity,
-                    productId: cartItem.sku.productId,
-                    productTranslations: cartItem.sku.product.productTranslations.map((translation) => ({
-                      id: translation.id,
-                      name: translation.name,
-                      description: translation.description,
-                      languageId: translation.languageId,
-                    })),
+                    productId: cartItem.sku.product.id,
+                    productTranslations: cartItem.sku.product.productTranslations.map((translation) => {
+                      return {
+                        id: translation.id,
+                        name: translation.name,
+                        description: translation.description,
+                        languageId: translation.languageId,
+                      }
+                    }),
                   }
                 }),
               },
@@ -178,38 +202,37 @@ export class OrderRepo {
                 connect: item.cartItemIds.map((cartItemId) => {
                   const cartItem = cartItemMap.get(cartItemId)!
                   return {
-                    id: cartItem.sku.productId,
+                    id: cartItem.sku.product.id,
                   }
                 }),
               },
             },
-          })
-        }),
+          }),
+        ),
       )
-      const cartItems$ = this.prisma.cartItem.deleteMany({
+      const cartItem$ = tx.cartItem.deleteMany({
         where: {
           id: {
             in: allBodyCartItemIds,
           },
         },
       })
-
       const sku$ = Promise.all(
-        cartItems.map((cartItem) => {
-          return tx.sKU.update({
-            where: { id: cartItem.skuId },
+        cartItems.map((item) =>
+          tx.sKU.update({
+            where: {
+              id: item.sku.id,
+            },
             data: {
               stock: {
-                decrement: cartItem.quantity,
+                decrement: item.quantity,
               },
             },
-          })
-        }),
+          }),
+        ),
       )
-      const cancelPaymentJob$ = this.orderProducer.cancelPaymentJob(payment.id)
-
-      const [orders] = await Promise.all([orders$, cartItems$, sku$, cancelPaymentJob$])
-
+      const addCancelPaymentJob$ = this.orderProducer.cancelPaymentJob(payment.id)
+      const [orders] = await Promise.all([orders$, cartItem$, sku$, addCancelPaymentJob$])
       const totalPrice = cartItems.reduce((total, item) => total + item.sku.price * item.quantity, 0)
       const paymentQR = createPaymentVietQR({
         amount: totalPrice,
@@ -217,7 +240,6 @@ export class OrderRepo {
       })
       return [payment, orders, paymentQR]
     })
-
     return {
       paymentId: payment.id,
       paymentQR,
