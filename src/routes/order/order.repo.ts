@@ -21,7 +21,7 @@ import { OrderProducer } from 'src/routes/order/order.producer'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
 import { SerializeAll } from 'src/shared/decorators/serialize.decorator'
-import { ServerOverloadException } from 'src/shared/error'
+import { ServerOverloadException, VersionConflictException } from 'src/shared/error'
 import { createPaymentVietQR, isNotFoundPrismaError } from 'src/shared/helpers'
 import { redlock } from 'src/shared/redis'
 import { PrismaService } from 'src/shared/services/prisma.service'
@@ -498,7 +498,6 @@ export class OrderRepo {
     try {
       const [paymentId, orders, paymentQR] = await this.prisma
         .$transaction<[number, CreateOrderResType['data'], string]>(async (tx) => {
-          // await tx.$queryRaw`SELECT * FROM "SKU" WHERE id IN (${Prisma.join(skuIds)}) FOR UPDATE`
           const cartItems = await tx.cartItem.findMany({
             where: {
               id: {
@@ -634,16 +633,27 @@ export class OrderRepo {
             })
 
           for (const item of cartItems) {
-            await tx.sKU.update({
-              where: {
-                id: item.sku.id,
-              },
-              data: {
-                stock: {
-                  decrement: item.quantity,
+            await tx.sKU
+              .update({
+                where: {
+                  id: item.sku.id,
+                  updatedAt: item.sku.updatedAt, // Đảm bảo không có ai khác đã cập nhật SKU này trong khi chúng ta đang xử lý
+                  stock: {
+                    gte: item.quantity, // Đảm bảo rằng stock vẫn còn đủ để giảm
+                  },
                 },
-              },
-            })
+                data: {
+                  stock: {
+                    decrement: item.quantity,
+                  },
+                },
+              })
+              .catch((e) => {
+                if (isNotFoundPrismaError(e)) {
+                  throw VersionConflictException
+                }
+                throw e
+              })
           }
 
           // const [orders] = await Promise.all([orders$, cartItem$, sku$])
