@@ -1,0 +1,18 @@
+- NestJS
+- Prisma
+- PostgreSQL
+- Docker
+- Redis
+- BullMQ
+- Swagger
+- Zod
+- Helmet : Security Headers
+- CORS
+- Throttler: Rate Limiting
+- Authentication: JWT, RBAC
+- Logger: Pino
+- WebSocket: Socket.IO
+- Redlock, Ioredis
+- Pessimistic Locking
+- Optimistic Locking
+- Cronjob

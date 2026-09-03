@@ -64,6 +64,7 @@
     "react-dom": "19.2.8",
     "react-email": "6.9.1",
     "redis": "^6.2.1",
+    "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.18.1",
     "rxjs": "^7.8.1",
