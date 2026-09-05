@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/require-await */
 import KeyvRedis from '@keyv/redis'
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'
 import { BullModule } from '@nestjs/bullmq'
 import { CacheModule } from '@nestjs/cache-manager'
-import { Module } from '@nestjs/common'
+import { HttpException, Logger, Module } from '@nestjs/common'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { GraphQLModule } from '@nestjs/graphql'
 import { ScheduleModule } from '@nestjs/schedule'
@@ -40,18 +41,43 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
+
+const graphqlLogger = new Logger('GraphQL')
+
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: path.join('src/schema.gql'),
-      // formatError(error) {
-      //   const { stacktrace, ...restExtension } = error.extensions ?? {}
-      //   return {
-      //     ...error,
-      //     extensions: restExtension,
-      //   }
-      // },
+      plugins: [
+        {
+          async requestDidStart() {
+            return {
+              async didEncounterErrors(requestContext) {
+                const requestLogger = requestContext.contextValue?.req?.log
+
+                for (const error of requestContext.errors) {
+                  const exception = error.originalError ?? error
+                  const message = `GraphQL error: ${error.message}`
+
+                  if (requestLogger) {
+                    requestLogger.error({ err: exception }, message)
+                  } else {
+                    graphqlLogger.error(message, exception instanceof Error ? exception.stack : error.stack)
+                  }
+                }
+              },
+            }
+          },
+        },
+      ],
+      formatError(error) {
+        const { stacktrace, ...restExtension } = error.extensions ?? {}
+        return {
+          ...error,
+          extensions: restExtension,
+        }
+      },
       context: ({ req, res }) => ({ req, res }),
     }),
     LoggerModule.forRoot({
@@ -106,7 +132,19 @@ import { SharedModule } from './shared/shared.module'
         },
 
         customErrorMessage: (req, res, err) => {
-          return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`
+          let message: unknown = err.message
+
+          if (err instanceof HttpException) {
+            const errorResponse = err.getResponse()
+            message =
+              typeof errorResponse === 'object' && errorResponse !== null && 'message' in errorResponse
+                ? errorResponse.message
+                : errorResponse
+          }
+
+          const formattedMessage = typeof message === 'string' ? message : JSON.stringify(message)
+
+          return `${req.method} ${req.url} ${res.statusCode} - ${formattedMessage}`
         },
 
         redact: {
