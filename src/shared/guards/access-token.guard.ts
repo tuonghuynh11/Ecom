@@ -7,6 +7,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
+import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql'
 import type { Cache } from 'cache-manager'
 import { keyBy } from 'lodash'
 import { RolePermissionsType } from 'src/shared/models/share-role.model'
@@ -29,11 +30,19 @@ export class AccessTokenGuard implements CanActivate {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>()
+    let request: any
+    let isGraphql: boolean = false
+    if (context.getType<GqlContextType>() === 'graphql') {
+      const gqlCtx = GqlExecutionContext.create(context)
+      request = gqlCtx.getContext().req
+      isGraphql = true
+    } else {
+      request = context.switchToHttp().getRequest<Request>()
+    }
 
     // Extract and validate the access token from the request headers
     const decodedAccessToken = await this.extractAndValidateToken(request)
-    await this.validateUserPermission(decodedAccessToken, request)
+    await this.validateUserPermission(decodedAccessToken, request, isGraphql)
     return true
   }
 
@@ -57,10 +66,14 @@ export class AccessTokenGuard implements CanActivate {
     return accessToken
   }
 
-  private async validateUserPermission(decodedAccessToken: AccessTokenPayload, request: any): Promise<void> {
+  private async validateUserPermission(
+    decodedAccessToken: AccessTokenPayload,
+    request: any,
+    isGraphql: boolean,
+  ): Promise<void> {
     const { roleId } = decodedAccessToken
     // Current path and method
-    const path = request.route.path
+    const path = isGraphql ? request.baseUrl : request.route.path
     const method = request.method
 
     const cacheKey = `role:${roleId}`

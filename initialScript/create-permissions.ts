@@ -9,6 +9,26 @@ const ClientModules = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS']
 
 const prisma = new PrismaService()
 
+const createGraphqlPermissions = async () => {
+  const permission = await prisma.permission.findFirst({
+    where: {
+      path: '/graphql',
+    },
+  })
+
+  if (permission) {
+    return permission
+  }
+  return await prisma.permission.create({
+    data: {
+      name: 'GraphQL path',
+      description: 'Access to GraphQL',
+      path: '/graphql',
+      method: HTTPMethod.POST,
+    },
+  })
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   await app.listen(3000)
@@ -20,9 +40,10 @@ async function bootstrap() {
   const availableRoutes: { method: keyof typeof HTTPMethod; path: string; name: string; module: string }[] =
     router.stack
       .map((layer) => {
-        if (layer.route) {
+        if (layer.route && HTTPMethod[String(layer.route.stack[0].method).toUpperCase() as keyof typeof HTTPMethod]) {
+          const method = String(layer.route.stack[0].method).toUpperCase()
+
           const path = layer.route.path
-          const method = String(layer.route.stack[0].method).toUpperCase() as keyof typeof HTTPMethod
           const moduleName = String(path.split('/')[1]).toUpperCase() || 'DEFAULT'
           return {
             path: `/api${path}`,
@@ -90,15 +111,21 @@ async function bootstrap() {
   // Get all permissions from the database
   const updatedPermissionInDb = await prisma.permission.findMany({ where: { deletedAt: null } })
 
-  const adminRolePermissionIds = updatedPermissionInDb.map((permission) => ({ id: permission.id }))
+  const graphqlPermission = await createGraphqlPermissions()
+
+  const adminRolePermissionIds = updatedPermissionInDb
+    .map((permission) => ({ id: permission.id }))
+    .concat({ id: graphqlPermission.id })
 
   const sellerRolePermissionIds = updatedPermissionInDb
     .filter((permission) => SellerModules.includes(permission.module))
     .map((permission) => ({ id: permission.id }))
+    .concat({ id: graphqlPermission.id })
 
   const clientRolePermissionIds = updatedPermissionInDb
     .filter((permission) => ClientModules.includes(permission.module))
     .map((permission) => ({ id: permission.id }))
+    .concat({ id: graphqlPermission.id })
 
   await Promise.all([
     updateRolePermissions(adminRolePermissionIds, RoleName.Admin),

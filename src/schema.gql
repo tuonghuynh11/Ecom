@@ -1,0 +1,173 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type SKU {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  value: String!
+  price: Float!
+  stock: Int!
+  image: String!
+  productId: Int!
+}
+
+type BrandTranslation {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  brandId: Int!
+  languageId: String!
+  name: String!
+  description: String!
+}
+
+type BrandIncludeTranslation {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  name: String!
+  logo: String!
+  brandTranslations: [BrandTranslation!]!
+}
+
+type CategoryTranslation {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  categoryId: Int!
+  languageId: String!
+  name: String!
+  description: String!
+}
+
+type CategoryIncludeTranslation {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  parentCategoryId: Int
+  name: String!
+  logo: String
+  categoryTranslations: [CategoryTranslation!]!
+}
+
+type ProductVariant {
+  value: String!
+  options: [String!]!
+}
+
+type ProductTranslation {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  productId: Int!
+  name: String!
+  description: String!
+  languageId: String!
+}
+
+type ProductIncludeTranslation {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  publishedAt: String
+  name: String!
+  basePrice: Float!
+  virtualPrice: Float!
+  brandId: Int!
+  images: [String!]!
+  variants: [ProductVariant!]!
+  productTranslations: [ProductTranslation!]!
+}
+
+type GetProducts {
+  totalItems: Int!
+  page: Int!
+  limit: Int!
+  totalPages: Int!
+  data: [ProductIncludeTranslation!]!
+}
+
+type GetProduct {
+  createdById: Int!
+  updatedById: Int
+  deletedById: Int
+  deletedAt: String
+  createdAt: String!
+  updatedAt: String!
+  id: Int!
+  publishedAt: String
+  name: String!
+  basePrice: Float!
+  virtualPrice: Float!
+  brandId: Int!
+  images: [String!]!
+  variants: [ProductVariant!]!
+  productTranslations: [ProductTranslation!]!
+  skus: [SKU!]!
+  categories: [CategoryIncludeTranslation!]!
+  brand: BrandIncludeTranslation!
+}
+
+type Query {
+  manageProducts(page: Int = 1, limit: Int = 10, name: String, brandIds: [Int!], categories: [Int!], minPrice: Float, maxPrice: Float, createdById: Int!, orderBy: String = "desc", sortBy: String = "createdAt", isPublic: Boolean): GetProducts!
+  products(page: Int = 1, limit: Int = 10, name: String, brandIds: [Int!], categories: [Int!], minPrice: Float, maxPrice: Float, createdById: Int, orderBy: String = "desc", sortBy: String = "createdAt"): [GetProducts!]!
+  product(productId: Int!): GetProducts!
+}
+
+type Mutation {
+  createProduct(createProductInput: CreateProductInput!): GetProduct!
+}
+
+input CreateProductInput {
+  publishedAt: String
+  name: String!
+  basePrice: Float!
+  virtualPrice: Float!
+  brandId: Int!
+  images: [String!]!
+  skus: [UpsertSKUInput!]!
+  categories: [Int!]!
+  variants: [ProductVariantInput!]!
+}
+
+input UpsertSKUInput {
+  value: String!
+  price: Float!
+  stock: Int!
+  image: String!
+}
+
+input ProductVariantInput {
+  value: String!
+  options: [String!]!
+}

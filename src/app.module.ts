@@ -1,8 +1,10 @@
 import KeyvRedis from '@keyv/redis'
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'
 import { BullModule } from '@nestjs/bullmq'
 import { CacheModule } from '@nestjs/cache-manager'
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { GraphQLModule } from '@nestjs/graphql'
 import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { randomUUID } from 'crypto'
@@ -38,9 +40,20 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './routes/auth/auth.module'
 import { SharedModule } from './shared/shared.module'
-
 @Module({
   imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: path.join('src/schema.gql'),
+      // formatError(error) {
+      //   const { stacktrace, ...restExtension } = error.extensions ?? {}
+      //   return {
+      //     ...error,
+      //     extensions: restExtension,
+      //   }
+      // },
+      context: ({ req, res }) => ({ req, res }),
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
