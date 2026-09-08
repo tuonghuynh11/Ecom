@@ -50,6 +50,11 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
+# test with specified file
+$ npm run test <path-to-spec-file> -- -t=<pattern>
+Ex: npm run test src/routes/auth/auth.service.spec.ts -- -t=register
+Explain: run test in auth.service.spec.ts file and only run test with name contains "register"
+
 # e2e tests
 $ npm run test:e2e
 

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { InvalidOTPException, OTPExpiredException } from 'src/routes/auth/auth.error'
+import { Prisma } from 'src/generated/prisma/client'
+import { EmailAlreadyExistsException, InvalidOTPException, OTPExpiredException } from 'src/routes/auth/auth.error'
 import { AuthRepository } from 'src/routes/auth/auth.repo'
 import { AuthService } from 'src/routes/auth/auth.service'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constant'
@@ -103,6 +104,10 @@ describe('AuthService', () => {
     authService = app.get<AuthService>(AuthService)
   })
 
+  afterEach(() => {
+    // Clear All Mocks after each test to avoid interference between tests
+    jest.clearAllMocks()
+  })
   describe('validateVerificationCode', () => {
     const mockVerificationCodePayload = {
       email: 'test@example.com',
@@ -156,6 +161,79 @@ describe('AuthService', () => {
       await expect(authService.validateVerificationCode(mockVerificationCodePayload)).rejects.toThrow(
         OTPExpiredException,
       )
+    })
+  })
+
+  describe('register', () => {
+    const mockVerificationCodeResult = {
+      id: 1,
+      email: 'test@example.com',
+      code: '123456',
+      type: TypeOfVerificationCode.REGISTER,
+      expiresAt: new Date(Date.now() + 10000).toISOString(),
+      createdAt: new Date().toISOString(),
+    }
+
+    const registerData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+      phoneNumber: '1234567890',
+      code: '123456',
+    }
+
+    const mockNewUser = {
+      id: 1,
+      ...registerData,
+      roleId: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Happy Path
+    it('should register a new user successfully', async () => {
+      jest.spyOn(authService, 'validateVerificationCode').mockResolvedValue(mockVerificationCodeResult)
+
+      mockSharedRoleRepository.getClientRoleId.mockResolvedValue(1)
+      mockHashingService.hash.mockResolvedValue('hashedPassword')
+      mockAuthRepository.createUser.mockResolvedValue(mockNewUser)
+      mockAuthRepository.deleteVerificationCode.mockResolvedValue(undefined)
+
+      const result = await authService.register(registerData)
+
+      expect(result).toEqual(mockNewUser)
+
+      expect(mockHashingService.hash).toHaveBeenCalledWith(registerData.password)
+      expect(mockAuthRepository.createUser).toHaveBeenCalled()
+      expect(mockAuthRepository.deleteVerificationCode).toHaveBeenCalled()
+    })
+    it('should throw UserAlreadyExistsException if email already exists', async () => {
+      jest.spyOn(authService, 'validateVerificationCode').mockResolvedValue(mockVerificationCodeResult)
+
+      mockSharedRoleRepository.getClientRoleId.mockResolvedValue(1)
+      mockHashingService.hash.mockResolvedValue('hashedPassword')
+      mockAuthRepository.createUser.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unprocessable Entity Exception', {
+          code: 'P2002',
+          clientVersion: '6.0.3',
+        }),
+      )
+      mockAuthRepository.deleteVerificationCode.mockResolvedValue(undefined)
+
+      await expect(authService.register(registerData)).rejects.toThrow(EmailAlreadyExistsException)
+    })
+
+    it('should throw error when validate verification code fails', async () => {
+      jest.spyOn(authService, 'validateVerificationCode').mockRejectedValue(mockVerificationCodeResult)
+
+      await expect(authService.register(registerData)).rejects.toBeDefined()
+
+      // verify that the other methods were not called since validation failed
+      expect(mockHashingService.hash).not.toHaveBeenCalled()
+      expect(mockSharedRoleRepository.getClientRoleId).not.toHaveBeenCalled()
+      expect(mockAuthRepository.createUser).not.toHaveBeenCalled()
+      expect(mockAuthRepository.deleteVerificationCode).not.toHaveBeenCalled()
     })
   })
 })
