@@ -39,6 +39,7 @@ async function bootstrap() {
   })
 
   // Enable CORS for all origins
+  // This allows requests from any domain to access the API
   app.enableCors({
     origin: '*',
   })
