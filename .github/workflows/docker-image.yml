@@ -39,8 +39,9 @@ jobs:
           password: ${{ secrets.HOST_PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
+            echo "Deploying hmt1/ecommerce-api:${GITHUB_SHA::7} to production"
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
-            docker pull hmt1/ecommerce-api:latest
+            docker pull hmt1/ecommerce-api:${GITHUB_SHA::7}
             docker stop ecom-api-prod
             docker rm ecom-api-prod
-            docker run -dp 3000:3000 --name ecom-api-prod --restart unless-stopped hmt1/ecommerce-api:latest
+            docker run -dp 3000:3000 --name ecom-api-prod --restart unless-stopped hmt1/ecommerce-api:${GITHUB_SHA::7}
