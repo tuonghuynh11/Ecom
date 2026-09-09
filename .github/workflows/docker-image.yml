@@ -1,0 +1,46 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Ecommerce
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Create env file'
+        run: echo "${{ secrets.ECOM_ENV_PRODUCTION }}" > .env.production
+      - name: Build the Docker image
+        run: |
+          # IMAGE_TAG=hmt1/ecommerce-api:v$(date +%s)
+           IMAGE_TAG=hmt1/ecommerce-api:${GITHUB_SHA::7}
+           docker build --progress=plain -t $IMAGE_TAG .
+           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+      - name: Log in to Docker Hub
+        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Push the Docker image
+        run: docker push $IMAGE_TAG
+
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   steps:
+  #     - name: Executing remote ssh commands using password
+  #       uses: appleboy/ssh-action@v1.0.0
+  #       with:
+  #         host: ${{ secrets.HOST }}
+  #         username: ${{ secrets.HOST_USERNAME }}
+  #         password: ${{ secrets.HOST_PASSWORD }}
+  #         port: ${{ secrets.PORT }}
+  #         script: |
+  #           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+  #           docker pull duthanhduoc/twitter:v4
+  #           docker stop twitter-clone
+  #           docker rm twitter-clone
+  #           docker run -dp 3000:3000 --name twitter-clone --restart unless-stopped -v ~/twitter-clone/uploads:/app/uploads duthanhduoc/twitter:v4
