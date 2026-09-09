@@ -65,3 +65,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Other files and directories
 /upload
+
+
+# Ignore the .env.production file in the root directory
+.env.production
+.env.development

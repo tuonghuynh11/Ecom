@@ -13,7 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: 'Create env file'
-        run: echo "${{ secrets.ECOM_ENV_PRODUCTION }}" > .env.production
+        env:
+          ECOM_ENV_PRODUCTION: ${{ secrets.ECOM_ENV_PRODUCTION }}
+        run: printf '%s\n' "$ECOM_ENV_PRODUCTION" > .env.production
       - name: Build the Docker image
         run: |
           # IMAGE_TAG=hmt1/ecommerce-api:v$(date +%s)
