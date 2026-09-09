@@ -39,7 +39,7 @@ jobs:
           password: ${{ secrets.HOST_PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
-            echo "Deploying hmt1/ecommerce-api:${GITHUB_SHA::7} to production"
+            echo "Deploying hmt1/ecommerce-api:${{GITHUB_SHA::7}} to production"
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
             docker pull hmt1/ecommerce-api:${GITHUB_SHA::7}
             if docker ps -aq --filter "name=^/ecom-api-prod$" | grep -q .; then
@@ -47,4 +47,4 @@ jobs:
             else
               echo "Container ecom-api-prod does not exist, skipping removal"
             fi
-            docker run -dp 3000:3000 --name ecom-api-prod --restart unless-stopped hmt1/ecommerce-api:${GITHUB_SHA::7}
+            docker run -dp 3000:3000 --name ecom-api-prod --restart unless-stopped hmt1/ecommerce-api:${{GITHUB_SHA::7}}
