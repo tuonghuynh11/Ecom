@@ -55,5 +55,7 @@ async function bootstrap() {
   app.useLogger(app.get(Logger))
 
   await app.listen(envConfig.PORT ?? 3000)
+
+  console.info('Listening on port', envConfig.PORT ?? 3000)
 }
 bootstrap()

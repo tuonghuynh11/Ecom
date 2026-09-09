@@ -1,0 +1,17 @@
+.git
+.gitignore
+.vscode
+.env
+.env.*
+!.env.production
+!.env.development
+node_modules
+dist
+coverage
+logs
+upload
+docs
+test
+*.log
+*.md
+payment-flow.png

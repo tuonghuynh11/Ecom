@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1
+
+ARG NODE_VERSION=22.18.0
+
+FROM node:${NODE_VERSION}-alpine AS base
+WORKDIR /app
+
+
+# Install dependencies, compile the application, then remove dev dependencies.
+FROM base AS build
+ENV NODE_ENV=development
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
+
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY . .
+RUN npx prisma generate \
+    && npm run build \
+    && npm prune --omit=dev --no-audit --no-fund \
+    && npm cache clean --force
+
+
+# Keep the final image limited to production dependencies and build artifacts.
+FROM base AS runtime
+ENV NODE_ENV=production
+
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/prisma ./prisma
+COPY --from=build --chown=node:node /app/src/i18n ./src/i18n
+COPY --chown=node:node package.json ./package.json
+COPY --chown=node:node ecosystem.config.js ./ecosystem.config.js
+COPY --chown=node:node .env.production ./.env.production
+
+RUN npm install pm2 -g
+
+RUN mkdir -p upload logs \
+    && chown -R node:node upload logs
+
+USER node
+EXPOSE 3000
+
+CMD ["pm2-runtime","start", "ecosystem.config.js", "--env", "production"]

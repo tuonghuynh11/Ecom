@@ -251,9 +251,10 @@ const graphqlLogger = new Logger('GraphQL')
       fallbackLanguage: 'en',
       loaderOptions: {
         path: path.resolve('src/i18n/'),
-        watch: true,
+        watch: process.env.NODE_ENV !== 'production',
       },
-      typesOutputPath: path.resolve('src/generated/i18n.generated.ts'),
+      typesOutputPath:
+        process.env.NODE_ENV !== 'production' ? path.resolve('src/generated/i18n.generated.ts') : undefined,
       // Priority QueryResolver: Has "lang" query parameter,
       // AcceptLanguageResolver: Has "Accept-Language" header
       resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],

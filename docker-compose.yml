@@ -1,0 +1,8 @@
+version: 1.0.0
+services:
+  ecom-api:
+    image: hmt/ecommerce-api:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - ENV_VAR=value

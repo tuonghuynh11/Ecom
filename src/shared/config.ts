@@ -2,14 +2,19 @@ import { config } from 'dotenv'
 import fs from 'fs'
 import path from 'path'
 import z from 'zod'
+
+const nodeEnv = process.env.NODE_ENV
+const pathEnv = nodeEnv ? `.env.${nodeEnv}` : '.env'
+
+console.log(`Server đang chạy trong môi trường ${nodeEnv}`)
+console.log('File env đang khởi chạy là: ', pathEnv)
+
 config({
-  path: '.env',
+  path: pathEnv,
 })
 
-console.log(path.resolve('.env'))
-
-if (!fs.existsSync(path.resolve('.env'))) {
-  console.log('Không tìm thấy file .env')
+if (!fs.existsSync(path.resolve(pathEnv))) {
+  console.log(`Không tìm thấy file ${pathEnv}`)
   process.exit(1)
 }
 
